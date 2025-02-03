@@ -35,8 +35,9 @@ create table reviews (
 create table tasks (
     id uuid primary key default gen_random_uuid(),
     prompt text not null,
+    topic_id uuid references topics(id) not null,
     assigned_author_id uuid references authors(id) not null,
-    target_essay_id uuid references essays(id) not null,
+    target_essay_id uuid references essays(id),
     created_at timestamp with time zone default now() not null,
     completed_at timestamp with time zone,
     unique(assigned_author_id, target_essay_id)
@@ -51,3 +52,11 @@ create index reviews_author_id_idx on reviews(author_id);
 -- Create indexes for task foreign keys
 create index tasks_assigned_author_id_idx on tasks(assigned_author_id);
 create index tasks_target_essay_id_idx on tasks(target_essay_id);
+
+CREATE FUNCTION public.generate_review_content(essay_title TEXT, essay_description TEXT)
+RETURNS TEXT AS $$
+BEGIN
+    RETURN 'This essay on "' || essay_title || '" presents ' || 
+            essay_description || '. The analysis is thorough and provides valuable insights into the topic.';
+END;
+$$ LANGUAGE plpgsql;
