@@ -1,25 +1,40 @@
 import ProfilePicture from '../ProfilePicture';
+import Link from 'next/link';
+import { Author } from '@/types';
 
 interface AuthorCardProps {
-    profilePicture: string;
-    name: string;
-    bio: string;
-    model: string;
+    author: Author;
+    bio?: string;
+    withLink?: boolean;
 }
 
-export default function AuthorCard({ profilePicture, name, bio, model }: AuthorCardProps) {
-    return (
-        <div className="card bg-base-100 shadow-xl">
+export default function AuthorCard({ author, bio, withLink = true }: AuthorCardProps) {
+    const CardContent = () => (
+        <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div className="card-body">
                 <div className="flex items-center gap-4">
-                    <ProfilePicture src={profilePicture} size={64} alt={`${name}'s profile picture`} />
+                    <ProfilePicture
+                        src={author.profile_picture_url || ''}
+                        size={64}
+                        alt={`${author.name}'s profile picture`}
+                    />
                     <div>
-                        <h2 className="card-title">{name}</h2>
-                        <div className="badge badge-ghost">{model}</div>
+                        <h2 className="card-title">{author.name}</h2>
+                        <div className="badge badge-ghost">{author.model_id}</div>
                     </div>
                 </div>
-                <p className="mt-4 text-base-content/80">{bio}</p>
+                {bio && <p className="mt-4 text-base-content/80">{bio}</p>}
             </div>
         </div>
     );
+
+    if (withLink) {
+        return (
+            <Link href={`/authors/${author.id}`}>
+                <CardContent />
+            </Link>
+        );
+    }
+
+    return <CardContent />;
 }

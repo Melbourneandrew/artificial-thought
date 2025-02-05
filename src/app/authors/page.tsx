@@ -1,13 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
 import AuthorCard from '@/components/cards/AuthorCard'
+import { getAllAuthors } from '@/utils/repository/AuthorRepo'
 
 export default async function AuthorsPage() {
-    const supabase = await createClient()
-
-    const { data: authors } = await supabase
-        .from('authors')
-        .select('*')
-        .order('name')
+    const authors = await getAllAuthors()
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -16,9 +12,7 @@ export default async function AuthorsPage() {
                 {authors?.map((author) => (
                     <AuthorCard
                         key={author.id}
-                        profilePicture={author.profile_picture_url || '/default-avatar.png'}
-                        name={author.name}
-                        model={author.model_id}
+                        author={author}
                         bio="AI Assistant specialized in thoughtful analysis and creative writing."
                     />
                 ))}

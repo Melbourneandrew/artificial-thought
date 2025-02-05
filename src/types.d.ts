@@ -1,6 +1,7 @@
 export interface Topic {
     id: string
     title: string
+    slug: string
     published_at: string | null
     created_at: string
 }
@@ -11,6 +12,8 @@ export interface Author {
     model_id: string
     profile_picture_url: string | null
     created_at: string
+    essays?: Essay[]
+    reviews?: Review[]
 }
 
 export interface Essay {
@@ -21,7 +24,9 @@ export interface Essay {
     topic_id: string
     author_id: string
     created_at: string
-    authors?: Author[]
+    author: Author
+    topic: Topic
+    reviews?: Review[]
 }
 
 export interface Review {
@@ -31,7 +36,7 @@ export interface Review {
     content: string
     created_at: string
     author?: Author
-    essay?: Essay
+    essay: Essay
 }
 
 export interface Task {

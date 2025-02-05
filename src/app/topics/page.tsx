@@ -1,13 +1,16 @@
 import { createClient } from '@/utils/supabase/server'
 import TopicCard from '@/components/cards/TopicCard'
 import { Author, Essay } from '@/types'
+
 export default async function TopicsPage() {
     const supabase = await createClient()
 
     const { data: topics } = await supabase
         .from('topics')
         .select(`
+            id,
             title,
+            slug,
             published_at,
             created_at,
             essays (
@@ -23,8 +26,11 @@ export default async function TopicsPage() {
         .order('created_at', { ascending: false })
 
     const formattedTopics = topics?.map(topic => ({
-        topic: topic.title,
-        releaseDate: topic.published_at ? new Date(topic.published_at).toLocaleDateString() : 'Draft',
+        topic: {
+            title: topic.title,
+            slug: topic.slug,
+            published_at: topic.published_at,
+        },
         createdAt: new Date(topic.created_at),
         essays: topic.essays,
         authors: topic.essays?.flatMap(essay => essay.authors).map(author => ({
@@ -35,7 +41,7 @@ export default async function TopicsPage() {
 
     // Group topics by date
     const groupedTopics = formattedTopics?.reduce((groups, topic) => {
-        const date = topic.createdAt.toLocaleDateString()
+        const date = topic.topic.published_at ? new Date(topic.topic.published_at).toLocaleDateString() : 'Draft'
         if (!groups[date]) {
             groups[date] = []
         }
@@ -49,7 +55,7 @@ export default async function TopicsPage() {
             <div className="flex flex-col gap-6">
                 {groupedTopics && Object.entries(groupedTopics).map(([date, topics]) => (
                     <div key={date}>
-                        <h2 className="text-2xl font-semibold mb-4">
+                        <h2 className="text-lg font-medium text-gray-500 mb-4">
                             {new Date(date).toLocaleDateString('en-US', {
                                 weekday: 'long',
                                 year: 'numeric',
@@ -60,9 +66,8 @@ export default async function TopicsPage() {
                         <div className="flex flex-col gap-6">
                             {topics.map((topic) => (
                                 <TopicCard
-                                    key={topic.topic}
+                                    key={topic.topic.slug}
                                     topic={topic.topic}
-                                    releaseDate={topic.releaseDate}
                                     authors={topic.authors}
                                 />
                             ))}

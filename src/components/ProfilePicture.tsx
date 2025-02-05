@@ -1,5 +1,5 @@
 interface ProfilePictureProps {
-    src: string;
+    src: string | null;
     size?: number;
     alt?: string;
 }
@@ -11,7 +11,7 @@ export default function ProfilePicture({ src, size = 40, alt = "Profile picture"
             style={{ width: size }}
         >
             <img
-                src={src}
+                src={src || undefined}
                 alt={alt}
                 className="w-full h-full object-cover"
             />

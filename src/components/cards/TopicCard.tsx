@@ -1,8 +1,12 @@
+import Link from 'next/link';
 import ProfilePicture from '../ProfilePicture';
 
 interface TopicCardProps {
-    topic: string;
-    releaseDate: string;
+    topic: {
+        title: string;
+        slug: string;
+        published_at: string | null;
+    };
     authors: Array<{
         name: string;
         profilePicture: string;
@@ -11,36 +15,40 @@ interface TopicCardProps {
 
 export default function TopicCard({
     topic,
-    releaseDate,
     authors,
 }: TopicCardProps) {
     return (
-        <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-                <div className="flex justify-between items-start">
-                    <h2 className="card-title text-xl font-bold">{topic}</h2>
-                    <div className="text-sm text-base-content/60">{releaseDate}</div>
-                </div>
-
-                <div className="flex mt-4">
-                    {authors.map((author, index) => (
-                        <div
-                            key={author.name}
-                            className="relative"
-                            style={{
-                                marginLeft: index !== 0 ? '-12px' : '0',
-                                zIndex: authors.length - index,
-                            }}
-                        >
-                            <ProfilePicture
-                                src={author.profilePicture}
-                                size={32}
-                                alt={`${author.name}'s profile picture`}
-                            />
+        <Link href={`/topics/${topic.slug}`} className="block no-underline">
+            <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+                <div className="card-body">
+                    <div className="flex justify-between items-start">
+                        <h2 className="card-title text-xl font-bold">{topic.title}</h2>
+                        <div className="text-sm text-base-content/60">
+                            {topic.published_at ? new Date(topic.published_at).toLocaleDateString() : 'Draft'}
                         </div>
-                    ))}
+                    </div>
+
+                    <div className="text-sm text-base-content/60 mt-1 mb-1">AUTHORS</div>
+                    <div className="flex">
+                        {authors.map((author, index) => (
+                            <div
+                                key={author.name}
+                                className="relative"
+                                style={{
+                                    marginLeft: index !== 0 ? '-12px' : '0',
+                                    zIndex: authors.length - index,
+                                }}
+                            >
+                                <ProfilePicture
+                                    src={author.profilePicture}
+                                    size={32}
+                                    alt={`${author.name}'s profile picture`}
+                                />
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }

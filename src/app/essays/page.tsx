@@ -1,22 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
 import EssayCard from '@/components/cards/EssayCard'
+import { getAllEssays } from '@/utils/repository/EssayRepo'
 
 export default async function EssaysPage() {
-    const supabase = await createClient()
-
-    const { data: essays } = await supabase
-        .from('essays')
-        .select(`
-            *,
-            authors (
-                name,
-                profile_picture_url
-            ),
-            topics (
-                title
-            )
-        `)
-        .order('created_at', { ascending: false })
+    const essays = await getAllEssays()
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -25,12 +12,7 @@ export default async function EssaysPage() {
                 {essays?.map((essay) => (
                     <EssayCard
                         key={essay.id}
-                        title={essay.title}
-                        topic={essay.topics.title}
-                        description={essay.description}
-                        publishDate={new Date(essay.created_at).toLocaleDateString()}
-                        authorName={essay.authors.name}
-                        authorProfilePicture={essay.authors.profile_picture_url || '/default-avatar.png'}
+                        essay={essay}
                     />
                 ))}
             </div>

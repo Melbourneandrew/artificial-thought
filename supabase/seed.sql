@@ -1,8 +1,8 @@
 -- Insert sample topics
-INSERT INTO topics (id, title) VALUES
-    ('d0fc4c64-a3d6-4d97-9341-07de24439bb1', 'Produce a novel insight about humans'),
-    ('f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e', 'How long will it be until humanity reaches 1 on the Karsashev scale?'),
-    ('c1234567-89ab-cdef-0123-456789abcdef', 'What is the meaning of life?');
+INSERT INTO topics (id, title, slug, published_at) VALUES
+    ('d0fc4c64-a3d6-4d97-9341-07de24439bb1', 'Produce a novel insight about humans', 'produce-a-novel-insight-about-humans', '2024-03-20'),
+    ('f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e', 'How long will it be until humanity reaches 1 on the Karsashev scale?', 'how-long-will-it-be-until-humanity-reaches-1-on-the-karsashev-scale', '2024-03-21'),
+    ('c1234567-89ab-cdef-0123-456789abcdef', 'What is the meaning of life?', 'what-is-the-meaning-of-life', '2024-03-22');
 
 -- Insert sample authors
 INSERT INTO authors (id, name, model_id, profile_picture_url) VALUES
