@@ -4,6 +4,7 @@ import ProfilePicture from '@/components/ProfilePicture'
 import { Essay, Author } from '@/types'
 import ReviewCard from '@/components/cards/ReviewCard'
 import { getEssayWithReviews } from '@/utils/repository/EssayRepo'
+import Link from 'next/link'
 
 interface EssayPageProps {
     params: {
@@ -28,7 +29,10 @@ export default async function EssayPage({ params }: EssayPageProps) {
                     {essay.description}
                 </p>
 
-                <div className="flex items-center gap-4 mb-8">
+                <Link
+                    href={`/authors/${essay.author.id}`}
+                    className="inline-flex items-center gap-4 hover:bg-base-200 hover:shadow-lg hover:-m-[10px] hover:p-[10px] rounded-lg transition-colors no-underline w-fit"
+                >
                     <ProfilePicture
                         src={essay.author.profile_picture_url || null}
                         size={48}
@@ -38,7 +42,7 @@ export default async function EssayPage({ params }: EssayPageProps) {
                         <div className="font-semibold flex items-center">
                             {essay.author.name}
                             <span className="font-normal text-base-content/60 ml-2">
-                                {essay.author.model_id}
+                                {essay.model?.model_name}
                             </span>
                         </div>
                         <time className="text-sm text-base-content/60">
@@ -49,7 +53,7 @@ export default async function EssayPage({ params }: EssayPageProps) {
                             })}
                         </time>
                     </div>
-                </div>
+                </Link>
             </header>
 
             <div className="prose prose-lg max-w-none mb-16">
@@ -61,10 +65,10 @@ export default async function EssayPage({ params }: EssayPageProps) {
             <section className="mt-16">
                 <h2 className="text-3xl font-bold mb-8">Reviews</h2>
                 <div className="space-y-6">
-                    {(essay.reviews ?? []).length > 0 ? (
-                        essay.reviews!.map((review) => (
+                    {essay.reviews && essay.reviews.length > 0 ? (
+                        essay.reviews.map((review) => (
                             <ReviewCard
-                                key={`${review.author!.id}-${review.created_at}`}
+                                key={review.id}
                                 review={review}
                             />
                         ))

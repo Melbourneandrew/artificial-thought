@@ -2,15 +2,27 @@ create table topics (
     id uuid primary key default gen_random_uuid(),
     title text not null,
     slug text not null,
-    description text not null,
     published_at timestamp with time zone,
+    created_at timestamp with time zone default now() not null
+);
+
+create table models (
+    id uuid primary key default gen_random_uuid(),
+    model_name text not null,
+    created_at timestamp with time zone default now() not null
+);
+
+create table prompts (
+    prompt_key text primary key,
+    prompt text not null,
     created_at timestamp with time zone default now() not null
 );
 
 create table authors (
     id uuid primary key default gen_random_uuid(),
     name text not null,
-    model_id text not null,
+    model_id uuid references models(id) not null,
+    system_prompt_key text references prompts(prompt_key) not null,
     profile_picture_url text,
     created_at timestamp with time zone default now() not null
 );
@@ -22,6 +34,7 @@ create table essays (
     content text not null,
     topic_id uuid references topics(id) not null,
     author_id uuid references authors(id) not null,
+    model_id uuid references models(id) not null,
     created_at timestamp with time zone default now() not null
 );
 
@@ -44,6 +57,7 @@ create table tasks (
     completed_at timestamp with time zone,
     unique(assigned_author_id, target_essay_id)
 );
+
 
 -- Create indexes for foreign keys to improve query performance
 create index essays_topic_id_idx on essays(topic_id);

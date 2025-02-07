@@ -14,6 +14,10 @@ export async function getAllEssays(): Promise<Essay[]> {
                 model_id,
                 profile_picture_url
             ),
+            model:models (
+                id,
+                model_name
+            ),
             topic:topics (
                 id,
                 title,
@@ -38,6 +42,10 @@ export async function getEssayById(id: string): Promise<Essay | null> {
                 name,
                 model_id,
                 profile_picture_url
+            ),
+            model:models (
+                id,
+                model_name
             ),
             topic:topics (
                 id,
@@ -64,6 +72,10 @@ export async function getEssayWithReviews(id: string): Promise<Essay | null> {
                 name,
                 model_id,
                 profile_picture_url
+            ),
+            model:models (
+                id,
+                model_name
             ),
             topic:topics (
                 id,

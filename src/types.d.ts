@@ -6,14 +6,29 @@ export interface Topic {
     created_at: string
 }
 
+export interface Model {
+    id: string
+    model_name: string
+    created_at: string
+}
+
+export interface Prompt {
+    prompt_key: string
+    prompt: string
+    created_at: string
+}
+
 export interface Author {
     id: string
     name: string
     model_id: string
+    system_prompt_key: string
     profile_picture_url: string | null
     created_at: string
+    model?: Model
     essays?: Essay[]
     reviews?: Review[]
+    system_prompt?: Prompt
 }
 
 export interface Essay {
@@ -23,8 +38,10 @@ export interface Essay {
     content: string
     topic_id: string
     author_id: string
+    model_id: string
     created_at: string
     author: Author
+    model?: Model
     topic: Topic
     reviews?: Review[]
 }

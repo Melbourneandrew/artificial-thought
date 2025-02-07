@@ -20,7 +20,9 @@ export default function AuthorCard({ author, bio, withLink = true }: AuthorCardP
                     />
                     <div>
                         <h2 className="card-title">{author.name}</h2>
-                        <div className="badge badge-ghost">{author.model_id}</div>
+                        <div className="badge badge-ghost">
+                            {author.model?.model_name || 'Unknown Model'}
+                        </div>
                     </div>
                 </div>
                 {bio && <p className="mt-4 text-base-content/80">{bio}</p>}
@@ -30,7 +32,7 @@ export default function AuthorCard({ author, bio, withLink = true }: AuthorCardP
 
     if (withLink) {
         return (
-            <Link href={`/authors/${author.id}`}>
+            <Link href={`/authors/${author.id}`} className="hover:shadow-2xl transition-shadow no-underline">
                 <CardContent />
             </Link>
         );

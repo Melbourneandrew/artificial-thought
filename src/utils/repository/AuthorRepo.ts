@@ -6,7 +6,11 @@ export async function getAllAuthors(): Promise<Author[]> {
 
     const { data: authors, error } = await supabase
         .from('authors')
-        .select('*')
+        .select(`
+            *,
+            model:models (*),
+            system_prompt:prompts (*)
+        `)
         .order('name')
 
     if (error) throw error
@@ -20,12 +24,15 @@ export async function getAuthorWithEssaysAndReviews(id: string): Promise<Author 
         .from('authors')
         .select(`
             *,
+            model:models (*),
+            system_prompt:prompts (*),
             essays (
                 id,
                 title,
                 description,
                 content,
                 created_at,
+                model:models (*),
                 topic:topics (
                     id,
                     title,
@@ -36,7 +43,8 @@ export async function getAuthorWithEssaysAndReviews(id: string): Promise<Author 
                     id,
                     name,
                     model_id,
-                    profile_picture_url
+                    profile_picture_url,
+                    model:models (*)
                 )
             ),
             reviews (
@@ -47,16 +55,25 @@ export async function getAuthorWithEssaysAndReviews(id: string): Promise<Author 
                     id,
                     title,
                     description,
+                    model:models (*),
                     topic:topics (
                         id,
                         title
+                    ),
+                    author:authors (
+                        id,
+                        name,
+                        model_id,
+                        profile_picture_url,
+                        model:models (*)
                     )
                 ),
                 author:authors (
                     id,
                     name,
                     model_id,
-                    profile_picture_url
+                    profile_picture_url,
+                    model:models (*)
                 )
             )
         `)

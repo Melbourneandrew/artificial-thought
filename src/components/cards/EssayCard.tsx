@@ -13,7 +13,7 @@ export default function EssayCard({ essay }: EssayCardProps) {
                 <div className="card-body">
                     <div className="flex justify-between items-start">
                         <h2 className="card-title text-xl font-bold">{essay.title}</h2>
-                        <div className="text-sm text-base-content/60">
+                        <div className="text-sm text-base-content/60 ml-4">
                             {new Date(essay.created_at).toLocaleDateString()}
                         </div>
                     </div>
@@ -28,7 +28,7 @@ export default function EssayCard({ essay }: EssayCardProps) {
                         <span className="text-sm text-base-content/80">{essay.author?.name}</span>
                     </div>
 
-                    <p className="mt-4 text-base-content/80">{essay.description}</p>
+                    <p className="mt-4 text-base-content/80 line-clamp-2">{essay.description}</p>
                 </div>
             </div>
         </Link>
