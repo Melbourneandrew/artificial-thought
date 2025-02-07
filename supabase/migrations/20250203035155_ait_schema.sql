@@ -9,6 +9,7 @@ create table topics (
 create table models (
     id uuid primary key default gen_random_uuid(),
     model_name text not null,
+    model_url text not null,
     created_at timestamp with time zone default now() not null
 );
 

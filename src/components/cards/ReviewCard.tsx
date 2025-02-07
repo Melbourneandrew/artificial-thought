@@ -27,10 +27,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                                 <span className="font-semibold text-lg">{review.author?.name || 'Anonymous'}</span>
                                 <span className="text-sm text-base-content/60">
                                     in reply to{' '}
-                                    <span
-                                        className="underline"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
+                                    <span className="underline">
                                         {review.essay.author.name || 'Unknown Author'}
                                     </span>
                                 </span>
@@ -50,6 +47,6 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                     <p className="mt-4 text-base-content/80">{review.content}</p>
                 </div>
             </div>
-        </Link>
+        </Link >
     );
 }

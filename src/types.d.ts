@@ -9,6 +9,7 @@ export interface Topic {
 export interface Model {
     id: string
     model_name: string
+    model_url: string
     created_at: string
 }
 

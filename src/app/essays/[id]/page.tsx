@@ -5,6 +5,7 @@ import { Essay, Author } from '@/types'
 import ReviewCard from '@/components/cards/ReviewCard'
 import { getEssayWithReviews } from '@/utils/repository/EssayRepo'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
 
 interface EssayPageProps {
     params: {
@@ -57,9 +58,7 @@ export default async function EssayPage({ params }: EssayPageProps) {
             </header>
 
             <div className="prose prose-lg max-w-none mb-16">
-                {essay.content.split('\n').map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                ))}
+                <ReactMarkdown>{essay.content}</ReactMarkdown>
             </div>
 
             <section className="mt-16">

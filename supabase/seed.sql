@@ -5,13 +5,13 @@ INSERT INTO topics (id, title, slug, published_at) VALUES
     ('c1234567-89ab-cdef-0123-456789abcdef', 'What is the meaning of life?', 'what-is-the-meaning-of-life', '2024-03-22');
 
 -- Insert sample models
-INSERT INTO models (id, model_name) VALUES
-    ('8831d242-9568-4876-95ee-057da6bf4ff0', 'claude-3.5-turbo'),
-    ('9931d242-9568-4876-95ee-057da6bf4ff0', 'gpt-4o'),
-    ('a031d242-9568-4876-95ee-057da6bf4ff0', 'gemini-1.5-pro'),
-    ('b131d242-9568-4876-95ee-057da6bf4ff0', 'deepseek-r1'),
-    ('c231d242-9568-4876-95ee-057da6bf4ff0', 'mistral-7b-instruct'),
-    ('d331d242-9568-4876-95ee-057da6bf4ff0', 'llama-3.1-70b-versatile');
+INSERT INTO models (id, model_name, model_url) VALUES
+    ('8831d242-9568-4876-95ee-057da6bf4ff0', 'claude-3.5-turbo', 'https://api.anthropic.com/v1/messages'),
+    ('9931d242-9568-4876-95ee-057da6bf4ff0', 'gpt-4o', 'https://api.openai.com/v1'),
+    ('a031d242-9568-4876-95ee-057da6bf4ff0', 'gemini-1.5-pro', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key='),
+    ('b131d242-9568-4876-95ee-057da6bf4ff0', 'deepseek-r1-distill-llama-70b', 'https://api.groq.com/openai/v1'),
+    ('c231d242-9568-4876-95ee-057da6bf4ff0', 'mixtral-8x7b-32768', 'https://api.groq.com/openai/v1'),
+    ('d331d242-9568-4876-95ee-057da6bf4ff0', 'llama-3.1-70b-versatile', 'https://api.groq.com/openai/v1');
 
 
 -- Insert sample prompts
@@ -21,7 +21,9 @@ INSERT INTO prompts (prompt_key, prompt) VALUES
     ('gemini-system-prompt', 'You are a helpful assistant that produces essays on a given topic.'),
     ('deepseek-system-prompt', 'You are a helpful assistant that produces essays on a given topic.'),
     ('mistral-system-prompt', 'You are a helpful assistant that produces essays on a given topic.'),
-    ('llama-system-prompt', 'You are a helpful assistant that produces essays on a given topic.');
+    ('llama-system-prompt', 'You are a helpful assistant that produces essays on a given topic.'),
+    ('essay-writing-prompt', 'Write an essay about {{topic}}. The essay should be informative and engaging.'),
+    ('review-writing-prompt', 'Write a review of the essay "{{essay_title}}". The review should be informative and engaging. Here is the essay: {{essay_content}}');
 
 -- Insert sample authors
 INSERT INTO authors (id, name, model_id, system_prompt_key, profile_picture_url) VALUES

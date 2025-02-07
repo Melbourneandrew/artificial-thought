@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { PromptCard } from './PromptCard'
 
 export default async function PromptsPage() {
     const supabase = await createClient()
@@ -18,15 +19,12 @@ export default async function PromptsPage() {
             <h1 className="text-2xl font-bold mb-6">Prompts</h1>
             <div className="space-y-6">
                 {prompts?.map((prompt) => (
-                    <div key={prompt.prompt_key} className="card bg-base-200">
-                        <div className="card-body">
-                            <h2 className="card-title">{prompt.prompt_key}</h2>
-                            <p className="whitespace-pre-wrap">{prompt.prompt}</p>
-                            <div className="text-sm text-base-content/70">
-                                Created: {new Date(prompt.created_at).toLocaleDateString()}
-                            </div>
-                        </div>
-                    </div>
+                    <PromptCard
+                        key={prompt.prompt_key}
+                        promptKey={prompt.prompt_key}
+                        prompt={prompt.prompt}
+                        createdAt={prompt.created_at}
+                    />
                 ))}
             </div>
         </div>
