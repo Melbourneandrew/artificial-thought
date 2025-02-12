@@ -142,3 +142,65 @@ export async function getRandomTopic(): Promise<TopicWithEssays | null> {
 
     return topic as unknown as TopicWithEssays
 }
+
+function slugify(text: string): string {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Remove all non-word chars (except spaces and dashes)
+        .replace(/\s+/g, '-')     // Replace spaces with dashes
+        .replace(/-+/g, '-')      // Replace multiple dashes with single dash
+        .replace(/^-+/, '')       // Trim dashes from start
+        .replace(/-+$/, '');      // Trim dashes from end
+}
+
+async function getUniqueSlug(baseSlug: string): Promise<string> {
+    const supabase = await createClient()
+    let slug = baseSlug
+    let counter = 1
+
+    while (true) {
+        const { data, error } = await supabase
+            .from('topics')
+            .select('slug')
+            .eq('slug', slug)
+            .single()
+
+        if (error?.code === 'PGRST116') {  // PGRST116 means no rows returned
+            return slug
+        }
+        if (error) throw error
+
+        // If we get here, the slug exists, so try the next number
+        slug = `${baseSlug}-${counter}`
+        counter++
+    }
+}
+
+export async function createTopic(params: Omit<Topic, 'id' | 'created_at' | 'slug'>): Promise<Topic> {
+    const supabase = await createClient()
+
+    const baseSlug = slugify(params.title)
+    const slug = await getUniqueSlug(baseSlug)
+
+    const { data: topic, error } = await supabase
+        .from('topics')
+        .insert({
+            title: params.title,
+            slug: slug,
+            published_at: params.published_at
+        })
+        .select(`
+            id,
+            title,
+            slug,
+            published_at,
+            created_at
+        `)
+        .single()
+
+    if (error) throw error
+    if (!topic) throw new Error('Failed to create topic')
+
+    return topic
+}

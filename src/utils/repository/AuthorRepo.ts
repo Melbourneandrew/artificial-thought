@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createBrowserClient } from '@/utils/supabase/client'
 import { Author } from '@/types'
 
 export async function getAllAuthors(): Promise<Author[]> {
@@ -112,4 +113,31 @@ export async function getAuthorWithEssaysAndReviews(id: string): Promise<Author 
 
     if (error) throw error
     return author as Author
+}
+
+export async function getAllAuthorsClient(): Promise<Author[]> {
+    const supabase = createBrowserClient()
+
+    const { data: authors, error } = await supabase
+        .from('authors')
+        .select(`
+            *,
+            model:models (*),
+            system_prompt:prompts (*)
+        `)
+        .order('name')
+
+    if (error) throw error
+    return authors
+}
+
+export async function updateAuthorModelClient(authorId: string, modelId: string): Promise<void> {
+    const supabase = createBrowserClient()
+
+    const { error } = await supabase
+        .from('authors')
+        .update({ model_id: modelId })
+        .eq('id', authorId)
+
+    if (error) throw error
 }
