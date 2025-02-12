@@ -20,7 +20,7 @@ export default function AuthorCard({ author, bio, withLink = true }: AuthorCardP
                     />
                     <div>
                         <h2 className="card-title">{author.name}</h2>
-                        <div className="badge badge-ghost">
+                        <div className="badge badge-ghost whitespace-normal h-auto py-[3px]">
                             {author.model?.model_name || 'Unknown Model'}
                         </div>
                     </div>

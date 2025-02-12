@@ -71,26 +71,32 @@ export async function getEssayWithReviews(id: string): Promise<Essay | null> {
                 id,
                 name,
                 model_id,
-                profile_picture_url
+                profile_picture_url,
+                model:models (*)
             ),
-            model:models (
-                id,
-                model_name
-            ),
-            topic:topics (
-                id,
-                title,
-                slug
-            ),
+            model:models (*),
+            topic:topics (*),
             reviews (
                 id,
                 content,
                 created_at,
+                essay_id,
                 author:authors (
                     id,
                     name,
                     model_id,
-                    profile_picture_url
+                    profile_picture_url,
+                    model:models (*)
+                ),
+                essay:essays (
+                    id,
+                    title,
+                    author:authors (
+                        id,
+                        name,
+                        profile_picture_url,
+                        model:models (*)
+                    )
                 )
             )
         `)
@@ -99,7 +105,7 @@ export async function getEssayWithReviews(id: string): Promise<Essay | null> {
 
     if (essayError) throw essayError
 
-    return essay as unknown as Essay;
+    return essay as Essay
 }
 
 export async function createEssay(essay: {

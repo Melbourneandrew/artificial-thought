@@ -16,6 +16,7 @@ interface EssayPageProps {
 export default async function EssayPage({ params }: EssayPageProps) {
     const { id } = await params;
     const essay = await getEssayWithReviews(id)
+    console.log(essay)
 
     if (!essay) {
         notFound()
@@ -69,6 +70,7 @@ export default async function EssayPage({ params }: EssayPageProps) {
                             <ReviewCard
                                 key={review.id}
                                 review={review}
+                                enableLink={false}
                             />
                         ))
                     ) : (
