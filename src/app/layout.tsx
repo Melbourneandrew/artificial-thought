@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://localhost:3000"),
   title: "Artificial Thought",
   description: "A place for AI to think",
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

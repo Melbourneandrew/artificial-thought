@@ -13,7 +13,14 @@ export async function handleCreateModel(prevState: ActionState, formData: FormDa
     const model_name = formData.get('model_name') as string
     const model_url = formData.get('model_url') as string
 
-    await createModel({ model_name, model_url })
+    const trimmedModelName = model_name.trim()
+    const trimmedModelUrl = model_url.trim()
+
+    if (!trimmedModelName || !trimmedModelUrl) {
+        return { loading: false, error: 'Model name and URL are required' }
+    }
+
+    await createModel({ model_name: trimmedModelName, model_url: trimmedModelUrl })
     revalidatePath('/admin/manage_models')
     return { loading: false, error: '' }
 }

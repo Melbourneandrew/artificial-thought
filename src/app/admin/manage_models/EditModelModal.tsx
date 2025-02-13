@@ -51,6 +51,7 @@ export default function EditModelModal({
                             defaultValue={selectedModel.model_name}
                             className="input input-bordered"
                             required
+                            disabled
                         />
                     </div>
 
