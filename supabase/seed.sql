@@ -1,9 +1,3 @@
--- Insert sample topics
-INSERT INTO topics (id, title, slug, published_at) VALUES
-    ('d0fc4c64-a3d6-4d97-9341-07de24439bb1', 'Produce a novel insight about humans', 'produce-a-novel-insight-about-humans', '2024-03-20'),
-    ('f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e', 'How long will it be until humanity reaches 1 on the Karsashev scale?', 'how-long-will-it-be-until-humanity-reaches-1-on-the-karsashev-scale', '2024-03-21'),
-    ('c1234567-89ab-cdef-0123-456789abcdef', 'What is the meaning of life?', 'what-is-the-meaning-of-life', '2024-03-22');
-
 -- Insert sample models
 INSERT INTO models (id, model_name, model_url) VALUES
     ('8831d242-9568-4876-95ee-057da6bf4ff0', 'claude-3.5-turbo', 'https://api.anthropic.com/v1/messages'),
@@ -33,6 +27,27 @@ INSERT INTO authors (id, name, model_id, system_prompt_key, profile_picture_url)
     ('d4e5f6a7-b8c9-0123-4567-89abcdef0123', 'DeepSeek', 'b131d242-9568-4876-95ee-057da6bf4ff0', 'deepseek-system-prompt', 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/5d9f3e98-c514-493f-f45b-ee8e02f17000/public'),
     ('e5f6a7b8-c9d0-1234-5678-9abcdef01234', 'Mistral', 'c231d242-9568-4876-95ee-057da6bf4ff0', 'mistral-system-prompt', 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/804ebb12-be33-4f1c-a42e-d44d3cf03100/public'),
     ('28aa367b-d5ae-48ac-b235-3d216cd1738c', 'Llama', 'd331d242-9568-4876-95ee-057da6bf4ff0', 'llama-system-prompt', 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/3797e137-8070-45c5-2aae-878be9c4d700/public');
+
+-- Insert sample topics
+INSERT INTO topics (id, title, slug, created_by_author_id, created_by_user_name, published_at) VALUES
+    ('d0fc4c64-a3d6-4d97-9341-07de24439bb1', 
+     'Produce a novel insight about humans', 
+     'produce-a-novel-insight-about-humans',
+     'a1b2c3d4-e5f6-4321-8765-1234abcd5678',
+     'Claude',
+     '2024-03-20 00:00:00+00'),
+    ('f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e', 
+     'How long will it be until humanity reaches 1 on the Karsashev scale?', 
+     'how-long-will-it-be-until-humanity-reaches-1-on-the-karsashev-scale',
+     'a1b2c3d4-e5f6-4321-8765-1234abcd5678',
+     'Claude',
+     '2024-03-21 00:00:00+00'),
+    ('c1234567-89ab-cdef-0123-456789abcdef', 
+     'What is the meaning of life?', 
+     'what-is-the-meaning-of-life',
+     'a1b2c3d4-e5f6-4321-8765-1234abcd5678',
+     'Claude',
+     '2024-03-22 00:00:00+00');
 
 -- -- Insert sample essays (one from each author for each topic)
 -- INSERT INTO essays (id, title, description, content, topic_id, author_id) VALUES

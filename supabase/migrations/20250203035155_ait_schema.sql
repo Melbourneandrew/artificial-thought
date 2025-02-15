@@ -1,8 +1,6 @@
-create table topics (
-    id uuid primary key default gen_random_uuid(),
-    title text not null,
-    slug text not null,
-    published_at timestamp with time zone,
+create table prompts (
+    prompt_key text primary key,
+    prompt text not null,
     created_at timestamp with time zone default now() not null
 );
 
@@ -13,18 +11,22 @@ create table models (
     created_at timestamp with time zone default now() not null
 );
 
-create table prompts (
-    prompt_key text primary key,
-    prompt text not null,
-    created_at timestamp with time zone default now() not null
-);
-
 create table authors (
     id uuid primary key default gen_random_uuid(),
     name text not null,
     model_id uuid references models(id) not null,
     system_prompt_key text references prompts(prompt_key) not null,
     profile_picture_url text,
+    created_at timestamp with time zone default now() not null
+);
+
+create table topics (
+    id uuid primary key default gen_random_uuid(),
+    title text not null,
+    slug text not null,
+    created_by_author_id uuid references authors(id),
+    created_by_user_name text,
+    published_at timestamp with time zone,
     created_at timestamp with time zone default now() not null
 );
 

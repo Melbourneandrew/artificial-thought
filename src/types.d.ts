@@ -2,8 +2,12 @@ export interface Topic {
     id: string
     title: string
     slug: string
-    published_at: string | null
+    created_by_author_id?: string | null
+    created_by_user_name?: string | null
+    published_at?: string | null
     created_at: string
+    author?: Author
+    essay_authors?: Author[]
 }
 
 export interface Model {

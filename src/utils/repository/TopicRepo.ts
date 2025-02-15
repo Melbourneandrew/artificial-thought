@@ -16,8 +16,27 @@ export async function getMostRecentTopic(): Promise<TopicWithEssays | null> {
             id,
             title,
             slug,
+            created_by_author_id,
+            created_by_user_name,
             published_at,
             created_at,
+            author:authors!created_by_author_id (
+                id,
+                name,
+                model_id,
+                profile_picture_url,
+                created_at
+            ),
+            essay_authors:essays!inner (
+                distinct_on: author_id,
+                author:authors (
+                    id,
+                    name,
+                    model_id,
+                    profile_picture_url,
+                    created_at
+                )
+            ),
             essays (
                 id,
                 title,
@@ -28,13 +47,6 @@ export async function getMostRecentTopic(): Promise<TopicWithEssays | null> {
                     name,
                     model_id,
                     profile_picture_url,
-                    created_at
-                ),
-                topic:topics (
-                    id,
-                    title,
-                    slug,
-                    published_at,
                     created_at
                 )
             )
@@ -59,8 +71,27 @@ export async function getTopicBySlug(slug: string): Promise<TopicWithEssays | nu
             id,
             title,
             slug,
+            created_by_author_id,
+            created_by_user_name,
             published_at,
             created_at,
+            author:authors!created_by_author_id (
+                id,
+                name,
+                model_id,
+                profile_picture_url,
+                created_at
+            ),
+            essay_authors:essays!inner (
+                distinct_on: author_id,
+                author:authors (
+                    id,
+                    name,
+                    model_id,
+                    profile_picture_url,
+                    created_at
+                )
+            ),
             essays (
                 id,
                 title,
@@ -109,8 +140,27 @@ export async function getRandomTopic(): Promise<TopicWithEssays | null> {
             id,
             title,
             slug,
+            created_by_author_id,
+            created_by_user_name,
             published_at,
             created_at,
+            author:authors!created_by_author_id (
+                id,
+                name,
+                model_id,
+                profile_picture_url,
+                created_at
+            ),
+            essay_authors:essays!inner (
+                distinct_on: author_id,
+                author:authors (
+                    id,
+                    name,
+                    model_id,
+                    profile_picture_url,
+                    created_at
+                )
+            ),
             essays (
                 id,
                 title,
@@ -121,13 +171,6 @@ export async function getRandomTopic(): Promise<TopicWithEssays | null> {
                     name,
                     model_id,
                     profile_picture_url,
-                    created_at
-                ),
-                topic:topics (
-                    id,
-                    title,
-                    slug,
-                    published_at,
                     created_at
                 )
             )
@@ -188,14 +231,18 @@ export async function createTopic(params: Omit<Topic, 'id' | 'created_at' | 'slu
         .insert({
             title: params.title,
             slug: slug,
-            published_at: params.published_at
+            published_at: params.published_at,
+            created_by_author_id: params.created_by_author_id,
+            created_by_user_name: params.created_by_user_name
         })
         .select(`
             id,
             title,
             slug,
             published_at,
-            created_at
+            created_at,
+            created_by_author_id,
+            created_by_user_name
         `)
         .single()
 
@@ -203,4 +250,88 @@ export async function createTopic(params: Omit<Topic, 'id' | 'created_at' | 'slu
     if (!topic) throw new Error('Failed to create topic')
 
     return topic
+}
+
+export async function getUserCreatedTopics(): Promise<Topic[]> {
+    const supabase = await createClient()
+
+    const { data: topics, error } = await supabase
+        .from('topics')
+        .select(`
+            id,
+            title,
+            slug,
+            created_by_author_id,
+            created_by_user_name,
+            published_at,
+            created_at,
+            essay_authors:essays!inner (
+                distinct_on: author_id,
+                author:authors (
+                    id,
+                    name,
+                    model_id,
+                    profile_picture_url,
+                    created_at
+                )
+            )
+        `)
+        .is('created_by_author_id', null)
+        .order('created_at', { ascending: false })
+
+    if (error) throw error
+    if (!topics) return []
+
+    const transformedTopics = topics?.map(topic => ({
+        ...topic,
+        essay_authors: topic.essay_authors.map(ea => ea.author)
+    }));
+
+    return transformedTopics as unknown as Topic[]
+}
+
+export async function getPublishedTopics(): Promise<Topic[]> {
+    const supabase = await createClient();
+
+    const { data: topics, error } = await supabase
+        .from('topics')
+        .select(`
+            id,
+            title,
+            slug,
+            created_by_author_id,
+            created_by_user_name,
+            published_at,
+            created_at,
+            author:authors!created_by_author_id (
+                id,
+                name,
+                model_id,
+                profile_picture_url,
+                created_at
+            ),
+            essay_authors:essays!inner (
+                distinct_on: author_id,
+                author:authors (
+                    id,
+                    name,
+                    model_id,
+                    profile_picture_url,
+                    created_at
+                )
+            )
+        `)
+        .lte('published_at', new Date().toISOString())
+        .not('published_at', 'is', null)
+        .order('published_at', { ascending: false })
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const transformedTopics = topics?.map(topic => ({
+        ...topic,
+        essay_authors: topic.essay_authors.map(ea => ea.author)
+    }));
+
+    return transformedTopics as unknown as Topic[];
 }
