@@ -18,17 +18,21 @@ export default function TopicCard({ topic }: TopicCardProps) {
                         </div>
                     </div>
 
-                    {topic.created_by_user_name && (
-                        <div className="flex items-center gap-2 mt-2 text-sm text-base-content/60">
-                            <span>Created by</span>
-                            <ProfilePicture
-                                src={topic.author?.profile_picture_url ?? ''}
-                                size={20}
-                                alt={`${topic.created_by_user_name}'s profile picture`}
-                            />
-                            <span>{topic.created_by_user_name}</span>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2 mt-2 text-sm text-base-content/60">
+                        <span>{topic.author ? 'Created by' : 'Submitted by'}</span>
+                        {topic.author ? (
+                            <>
+                                <ProfilePicture
+                                    src={topic.author.profile_picture_url ?? ''}
+                                    size={20}
+                                    alt={`${topic.author.name}'s profile picture`}
+                                />
+                                <span>{topic.author.name}</span>
+                            </>
+                        ) : topic.created_by_user_name ? (
+                            <span className="underline">{topic.created_by_user_name}</span>
+                        ) : null}
+                    </div>
 
                     {topic.essay_authors && topic.essay_authors.length > 0 && (
                         <>

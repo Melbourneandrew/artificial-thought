@@ -29,30 +29,14 @@ export async function scheduleTopic(
         revalidatePath('/admin/schedule_topics')
         return { success: true, error: null }
     } catch (error) {
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to schedule topic'
+        const errorMessage = error instanceof Error ? error.message : 'Failed to schedule topic'
+        // Check specifically for the duplicate date error
+        if (errorMessage === 'A topic is already scheduled for this date') {
+            return {
+                success: false,
+                error: 'A topic is already scheduled for this date. Please choose a different date.'
+            }
         }
-    }
-}
-
-export async function getUserCreatedTopicsList(): Promise<{
-    success: boolean
-    error: string | null
-    data: Topic[] | null
-}> {
-    try {
-        const topics = await getUserCreatedTopics()
-        return {
-            success: true,
-            error: null,
-            data: topics
-        }
-    } catch (error) {
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch topics',
-            data: null
-        }
+        return { success: false, error: errorMessage }
     }
 }

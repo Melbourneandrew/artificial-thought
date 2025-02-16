@@ -3,23 +3,26 @@
 import { useActionState } from 'react'
 import { scheduleTopic } from './actions'
 
-interface ScheduleTopicModalProps {
-    isOpen: boolean
-    onClose: () => void
+function formatDate(date: Date) {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
 }
 
-export function ScheduleTopicModal({ isOpen, onClose }: ScheduleTopicModalProps) {
+export function ScheduleTopicModal() {
     const initialState = { success: false, error: null }
     const [state, formAction, pending] = useActionState(scheduleTopic, initialState)
 
     // Close modal and reload page when submission is successful
-    if (state.success && isOpen) {
-        onClose()
+    if (state.success) {
+        // @ts-ignore
+        document.getElementById('schedule_topic_modal').close()
         window.location.reload()
     }
 
     return (
-        <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
+        <dialog id="schedule_topic_modal" className="modal">
             <div className="modal-box">
                 <h3 className="font-bold text-lg mb-4">Schedule New Topic</h3>
 
@@ -55,10 +58,19 @@ export function ScheduleTopicModal({ isOpen, onClose }: ScheduleTopicModalProps)
                             <span className="label-text">Publish Date</span>
                         </label>
                         <input
-                            type="datetime-local"
+                            type="date"
                             name="published_at"
                             className="input input-bordered w-full"
-                            min={new Date().toISOString().slice(0, 16)}
+                            min={formatDate(new Date())}
+                            defaultValue={(() => {
+                                const now = new Date()
+                                if (now.getHours() < 8) {
+                                    return formatDate(now)
+                                }
+                                const tomorrow = new Date(now)
+                                tomorrow.setDate(tomorrow.getDate() + 1)
+                                return formatDate(tomorrow)
+                            })()}
                             required
                         />
                     </div>
@@ -71,7 +83,8 @@ export function ScheduleTopicModal({ isOpen, onClose }: ScheduleTopicModalProps)
                         <button
                             type="button"
                             className="btn"
-                            onClick={onClose}
+                            // @ts-ignore
+                            onClick={() => document.getElementById('schedule_topic_modal').close()}
                         >
                             Cancel
                         </button>
@@ -86,7 +99,7 @@ export function ScheduleTopicModal({ isOpen, onClose }: ScheduleTopicModalProps)
                 </form>
             </div>
             <form method="dialog" className="modal-backdrop">
-                <button onClick={onClose}>close</button>
+                <button>close</button>
             </form>
         </dialog>
     )

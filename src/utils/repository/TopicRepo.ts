@@ -220,18 +220,53 @@ async function getUniqueSlug(baseSlug: string): Promise<string> {
     }
 }
 
+async function hasTopicOnDate(date: Date): Promise<boolean> {
+    const supabase = await createClient()
+
+    // Set time range for the entire day (from 00:00 to 23:59)
+    const startOfDay = new Date(date)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(date)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    const { count, error } = await supabase
+        .from('topics')
+        .select('*', { count: 'exact', head: true })
+        .gte('published_at', startOfDay.toISOString())
+        .lte('published_at', endOfDay.toISOString())
+
+    if (error) throw error
+    return (count ?? 0) > 0
+}
+
 export async function createTopic(params: Omit<Topic, 'id' | 'created_at' | 'slug'>): Promise<Topic> {
     const supabase = await createClient()
 
+    if (params.published_at) {
+        const publishDate = new Date(params.published_at)
+        const hasExistingTopic = await hasTopicOnDate(publishDate)
+        if (hasExistingTopic) {
+            throw new Error('A topic is already scheduled for this date')
+        }
+    }
+
     const baseSlug = slugify(params.title)
     const slug = await getUniqueSlug(baseSlug)
+
+    // Set published_at to 8am on the specified date if it exists
+    let scheduledPublishAt = params.published_at
+    if (scheduledPublishAt) {
+        const date = new Date(scheduledPublishAt)
+        date.setHours(8, 0, 0, 0)
+        scheduledPublishAt = date.toISOString()
+    }
 
     const { data: topic, error } = await supabase
         .from('topics')
         .insert({
             title: params.title,
             slug: slug,
-            published_at: params.published_at,
+            published_at: scheduledPublishAt,
             created_by_author_id: params.created_by_author_id,
             created_by_user_name: params.created_by_user_name
         })
@@ -265,7 +300,7 @@ export async function getUserCreatedTopics(): Promise<Topic[]> {
             created_by_user_name,
             published_at,
             created_at,
-            essay_authors:essays!inner (
+            essay_authors:essays (
                 distinct_on: author_id,
                 author:authors (
                     id,
@@ -282,9 +317,9 @@ export async function getUserCreatedTopics(): Promise<Topic[]> {
     if (error) throw error
     if (!topics) return []
 
-    const transformedTopics = topics?.map(topic => ({
+    const transformedTopics = topics.map(topic => ({
         ...topic,
-        essay_authors: topic.essay_authors.map(ea => ea.author)
+        essay_authors: (topic.essay_authors || []).map(ea => ea.author)
     }));
 
     return transformedTopics as unknown as Topic[]

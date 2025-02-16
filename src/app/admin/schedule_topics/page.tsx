@@ -1,62 +1,20 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import { TopicsList } from './TopicsList'
 import { ScheduleTopicModal } from './ScheduleTopicModal'
-import CalendarIcon from '@/components/icons/CalendarIcon'
-import TopicCard from '@/components/cards/TopicCard'
-import { getUserCreatedTopicsList } from './actions'
-import { Topic } from '@/types'
+import { ScheduleTopicButton } from './ScheduleTopicButton'
+import { getUserCreatedTopics } from '@/utils/repository/TopicRepo'
 
-export default function ScheduleTopicsPage() {
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [topics, setTopics] = useState<Topic[]>([])
-    const [error, setError] = useState<string | null>(null)
-
-    const fetchTopics = async () => {
-        const response = await getUserCreatedTopicsList()
-        console.log(response)
-        if (response.success) {
-            setTopics(response.data || [])
-        } else {
-            setError(response.error)
-        }
-    }
-
-    useEffect(() => {
-        fetchTopics()
-    }, [])
+export default async function ScheduleTopicsPage() {
+    const topics = await getUserCreatedTopics()
+    console.log('topics from page', topics)
 
     return (
-        <div className="p-4">
-            <div className="flex justify-end">
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="btn btn-primary mb-4"
-                >
-                    Schedule New Topic
-                    <CalendarIcon />
-                </button>
+        <div className="container mx-auto mt-4">
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">Scheduled Topics</h1>
+                <ScheduleTopicButton />
             </div>
-
-            {error && (
-                <div className="alert alert-error mb-4">
-                    {error}
-                </div>
-            )}
-
-            <div className="flex flex-col gap-4">
-                {topics.map((topic, index) => (
-                    <TopicCard
-                        key={index}
-                        topic={topic}
-                    />
-                ))}
-            </div>
-
-            <ScheduleTopicModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-            />
+            <TopicsList initialTopics={topics} initialError={null} />
+            <ScheduleTopicModal />
         </div>
     )
 }
