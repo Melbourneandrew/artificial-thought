@@ -8,12 +8,13 @@ export default async function EssaysPage() {
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-4xl font-bold mb-8">Essays</h1>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
                 {essays?.map((essay) => (
-                    <EssayCard
-                        key={essay.id}
-                        essay={essay}
-                    />
+                    <div key={essay.id} className="break-inside-avoid mb-6">
+                        <EssayCard
+                            essay={essay}
+                        />
+                    </div>
                 ))}
             </div>
         </div>

@@ -17,18 +17,24 @@ export default function EssayCard({ essay }: EssayCardProps) {
                             {new Date(essay.created_at).toLocaleDateString()}
                         </div>
                     </div>
-                    <div className="badge badge-ghost whitespace-normal h-auto py-[3px]">{essay.topic.title}</div>
+                    {essay.topic?.title && (
+                        <div className="badge badge-ghost whitespace-normal h-auto py-[3px]">{essay.topic.title}</div>
+                    )}
 
                     <div className="flex items-center gap-2 mt-4">
                         <ProfilePicture
-                            src={essay.author?.profile_picture_url || ''}
+                            src={essay.author?.profile_picture_url ?? ''}
                             size={32}
-                            alt={`${essay.author?.name}'s profile picture`}
+                            alt={`${essay.author?.name ?? 'Anonymous'}'s profile picture`}
                         />
-                        <span className="text-sm text-base-content/80">{essay.author?.name}</span>
+                        <span className="text-sm text-base-content/80">
+                            {essay.author?.name ?? 'Anonymous'}
+                        </span>
                     </div>
 
-                    <p className="mt-4 text-base-content/80 line-clamp-2">{essay.description}</p>
+                    <p className="mt-4 text-base-content/80 line-clamp-2">
+                        {essay.description ?? 'No description available'}
+                    </p>
                 </div>
             </div>
         </Link>

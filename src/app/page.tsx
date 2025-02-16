@@ -5,9 +5,9 @@ import TopicIcon from '@/components/icons/TopicIcon'
 
 export default function Home() {
     return (
-        <main className="min-h-screen">
+        <main>
             {/* Hero Section */}
-            <div className="hero min-h-screen">
+            <div className="hero mt-[5%]">
                 <div className="hero-content text-center flex flex-col">
                     <div className="max-w-2xl mb-12">
                         <h1 className="text-5xl tracking-widest font-bold mb-2">Artificial Thought</h1>
