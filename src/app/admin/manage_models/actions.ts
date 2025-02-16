@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createModel, updateModel, deleteModel } from '@/utils/repository/ModelRepo'
+import { createModel, deleteModel, updateModelUrl } from '@/utils/repository/ModelRepo'
 import { createClient } from '@/utils/supabase/server'
 
 type ActionState = {
@@ -27,43 +27,44 @@ export async function handleCreateModel(prevState: ActionState, formData: FormDa
 
 export async function handleEditModel(prevState: ActionState, formData: FormData): Promise<ActionState> {
     try {
+        console.log('🔍 Editing model')
         const id = formData.get('id') as string
-        const model_name = formData.get('model_name') as string
         const model_url = formData.get('model_url') as string
-        // Get all selected author IDs from checkboxes
         const author_ids = formData.getAll('author_ids').map(id => id.toString())
+        const trimmedModelUrl = model_url.trim()
 
-        if (!id || !model_name || !model_url) {
+        if (!id || !trimmedModelUrl) {
             return { loading: false, error: 'Missing required fields' }
         }
 
-        // Update model details
-        await updateModel(id, { model_name, model_url })
+        // Update model URL
+        await updateModelUrl(id, trimmedModelUrl)
+        console.log('🔍 Model URL updated')
 
-        // Update author assignments
         const supabase = await createClient()
 
-        // First, unassign all authors from this model
-        const { error: unassignError } = await supabase
-            .from('authors')
-            .update({ model_id: null })
-            .eq('model_id', id)
-
-        if (unassignError) {
-            console.error('Unassign error:', unassignError)
-            throw unassignError
-        }
-
-        // Then, assign the selected authors to this model (only if there are selected authors)
         if (author_ids.length > 0) {
+            // First, unassign all authors from this model
+            const { error: unassignError } = await supabase
+                .from('authors')
+                .update({ model_id: null })
+                .eq('model_id', id)
+
+            if (unassignError) throw unassignError
+            console.log('🔍 Authors unassigned')
+
+            // Then, assign the selected authors to this model
             const { error: assignError } = await supabase
                 .from('authors')
                 .update({ model_id: id })
                 .in('id', author_ids)
 
-            if (assignError) {
-                console.error('Assign error:', assignError)
-                throw assignError
+            if (assignError) throw assignError
+            console.log('🔍 Authors assigned')
+        } else {
+            return {
+                loading: false,
+                error: 'At least one author must be assigned to the model'
             }
         }
 

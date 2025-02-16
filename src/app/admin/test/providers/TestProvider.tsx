@@ -23,6 +23,7 @@ const TestProvider = forwardRef<TestFormElement, TestProviderProps>(function Tes
         error: '',
         result: ''
     })
+    const [showFullResult, setShowFullResult] = useState(false)
     const formRef = useRef<HTMLFormElement>(null)
 
     // Expose test function that can be called from parent
@@ -90,21 +91,31 @@ const TestProvider = forwardRef<TestFormElement, TestProviderProps>(function Tes
                 </button>
             </form>
 
+            {state.result && (
+                <div className="flex items-center gap-2 mt-2">
+                    <div className="alert alert-success py-2 text-sm min-h-0 text-center">
+                        <span>Success!</span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setShowFullResult(!showFullResult)}
+                        className="btn btn-sm"
+                    >
+                        {showFullResult ? 'Show Less' : 'Show Full Result'}
+                    </button>
+                </div>
+            )}
+
             {state.error && (
                 <div className="alert alert-error mt-2 py-2 text-sm">
                     <span>{state.error.split('\n')[0]}</span>
                 </div>
             )}
 
-            {state.result && (
-                <div className="mt-2">
-                    <div className="alert alert-success py-2 text-sm">
-                        <span>Success!</span>
-                    </div>
-                    <pre className="bg-base-300 p-2 rounded-lg mt-2 text-xs overflow-x-auto">
-                        {state.result.split('\n')[0]}
-                    </pre>
-                </div>
+            {showFullResult && state.result && (
+                <pre className="bg-base-300 p-2 rounded-lg mt-2 text-xs w-full whitespace-pre-wrap break-words">
+                    {state.result}
+                </pre>
             )}
         </div>
     )

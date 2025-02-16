@@ -14,7 +14,7 @@ create table models (
 create table authors (
     id uuid primary key default gen_random_uuid(),
     name text not null,
-    model_id uuid references models(id) not null,
+    model_id uuid references models(id),
     system_prompt_key text references prompts(prompt_key) not null,
     profile_picture_url text,
     created_at timestamp with time zone default now() not null

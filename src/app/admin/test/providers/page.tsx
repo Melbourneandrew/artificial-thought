@@ -5,8 +5,6 @@ import { Model } from '@/types'
 export default async function TestProvidersPage() {
     const models = await getAllModels()
 
-    // Group models by URL
-    console.log('🔍 Models:', models)
     const modelsByUrl = models.reduce((acc, model) => {
         const url = model.model_url
         if (!acc[url]) {

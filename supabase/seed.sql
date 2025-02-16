@@ -1,11 +1,11 @@
 -- Insert sample models
 INSERT INTO models (id, model_name, model_url) VALUES
-    ('8831d242-9568-4876-95ee-057da6bf4ff0', 'claude-3.5-turbo', 'https://api.anthropic.com/v1/messages'),
+    ('8831d242-9568-4876-95ee-057da6bf4ff0', 'claude-3-5-sonnet-latest', 'https://api.anthropic.com/v1/messages'),
     ('9931d242-9568-4876-95ee-057da6bf4ff0', 'gpt-4o', 'https://api.openai.com/v1'),
-    ('a031d242-9568-4876-95ee-057da6bf4ff0', 'gemini-1.5-pro', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key='),
+    ('a031d242-9568-4876-95ee-057da6bf4ff0', 'gemini-1.5-pro', 'https://generativelanguage.googleapis.com/v1beta/openai'),
     ('b131d242-9568-4876-95ee-057da6bf4ff0', 'deepseek-r1-distill-llama-70b', 'https://api.groq.com/openai/v1'),
     ('c231d242-9568-4876-95ee-057da6bf4ff0', 'mixtral-8x7b-32768', 'https://api.groq.com/openai/v1'),
-    ('d331d242-9568-4876-95ee-057da6bf4ff0', 'llama-3.1-70b-versatile', 'https://api.groq.com/openai/v1');
+    ('d331d242-9568-4876-95ee-057da6bf4ff0', 'llama-3.3-70b-versatile', 'https://api.groq.com/openai/v1');
 
 
 -- Insert sample prompts

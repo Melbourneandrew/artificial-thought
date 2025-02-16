@@ -15,10 +15,6 @@ export default function ManageModelsPage() {
     const [loading, setLoading] = useState(true)
     const supabase = createClient()
 
-    const [createState, createAction] = useActionState(handleCreateModel, { loading: false, error: '' })
-    const [editState, editAction] = useActionState(handleEditModel, { loading: false, error: '' })
-    const [deleteState, deleteAction] = useActionState(handleDeleteModel, { loading: false, error: '' })
-
     const [selectedModel, setSelectedModel] = useState<Model | null>(null)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)

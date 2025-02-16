@@ -3,7 +3,6 @@
 import { Model, Author } from '@/types'
 import { useActionState } from 'react'
 import { handleEditModel } from './actions'
-import { useRouter } from 'next/navigation'
 
 interface EditModelModalProps {
     isOpen: boolean
@@ -18,8 +17,7 @@ export default function EditModelModal({
     authors,
     onClose
 }: EditModelModalProps) {
-    const router = useRouter()
-    const [editState, editAction] = useActionState(handleEditModel, { loading: false, error: '' })
+    const [editState, editAction, pending] = useActionState(handleEditModel, { loading: false, error: '' })
 
     if (!selectedModel) return null
 
@@ -28,6 +26,7 @@ export default function EditModelModal({
             <div className="modal-box overflow-visible">
                 <h3 className="font-bold text-lg">Edit Model</h3>
                 <form action={async (formData: FormData) => {
+                    console.log('FORM SUBMITTED')
                     editAction(formData)
                     if (!editState.error) {
                         window.location.reload()
@@ -92,10 +91,10 @@ export default function EditModelModal({
                         <button
                             type="submit"
                             className="btn btn-primary w-[100px]"
-                            disabled={editState?.loading}
+                            disabled={pending}
                         >
-                            {editState?.loading && <span className="loading loading-spinner"></span>}
-                            {editState?.loading ? 'Saving...' : 'Save'}
+                            {pending && <span className="loading loading-spinner"></span>}
+                            {pending ? 'Saving...' : 'Save'}
                         </button>
                         <button
                             type="button"

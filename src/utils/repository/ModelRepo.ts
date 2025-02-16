@@ -27,20 +27,6 @@ export async function createModel(model: Pick<Model, 'model_name' | 'model_url'>
     return data
 }
 
-export async function updateModel(id: string, updates: Partial<Pick<Model, 'model_name' | 'model_url'>>): Promise<Model> {
-    const supabase = await createClient()
-
-    const { data, error } = await supabase
-        .from('models')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single()
-
-    if (error) throw error
-    return data
-}
-
 export async function deleteModel(id: string): Promise<void> {
     const supabase = await createClient()
 
@@ -101,4 +87,18 @@ export async function deleteModelClient(id: string): Promise<void> {
         .eq('id', id)
 
     if (error) throw error
+}
+
+export async function updateModelUrl(id: string, model_url: string): Promise<Model> {
+    const supabase = await createClient()
+    console.log('🔍 Updating model URL:', id, model_url)
+    const { data, error } = await supabase
+        .from('models')
+        .update({ model_url })
+        .eq('id', id)
+        .select()
+        .single()
+
+    if (error) throw error
+    return data
 } 
