@@ -1,66 +1,88 @@
-import { getRandomTopic } from '@/utils/repository/TopicRepo'
+import { getPublishedTopics } from '@/utils/repository/TopicRepo'
 import { getAllAuthors } from '@/utils/repository/AuthorRepo'
 import { writeEssay } from '@/agent/actions/write-essay'
-import { getEssayById } from '@/utils/repository/EssayRepo'
+import { redirect } from 'next/navigation'
 
-export default async function TestActions() {
-    console.log('🎲 Fetching random topic...')
-    const topicData = await getRandomTopic()
-    if (!topicData) {
-        return (
-            <div className="container mx-auto p-4">
-                <div className="alert alert-error">
-                    <span>No topics available</span>
-                </div>
-            </div>
-        )
+export default async function WriteEssayPage() {
+    const [topics, authors] = await Promise.all([
+        getPublishedTopics(),
+        getAllAuthors()
+    ])
+
+    async function handleSubmit(formData: FormData) {
+        'use server'
+        let essayId: string;
+        try {
+            const author = JSON.parse(formData.get('authorId') as string)
+            const topic = JSON.parse(formData.get('topicId') as string)
+
+            if (!author.model) {
+                throw new Error('Selected author has no associated model')
+            }
+
+            essayId = await writeEssay(author, author.model, topic)
+        } catch (error) {
+            console.error('Error writing essay:', error)
+            throw error
+        }
+
+        redirect(`/essays/${essayId}`)
     }
-    console.log('📝 Selected topic:', topicData)
-
-    console.log('🤖 Fetching available authors...')
-    const authors = await getAllAuthors()
-    const gpt4Author = authors.find(author => author.model?.model_name.includes('gpt-4'))
-    if (!gpt4Author) {
-        return (
-            <div className="container mx-auto p-4">
-                <div className="alert alert-error">
-                    <span>No GPT-4 author found</span>
-                </div>
-            </div>
-        )
-    }
-    console.log('🎭 Selected author:', gpt4Author)
-
-    console.log('✍️ Starting essay generation...')
-    const essayId = await writeEssay(gpt4Author, gpt4Author.model!, topicData)
-    console.log('📎 Essay created with ID:', essayId)
-
-    console.log('📥 Fetching generated essay...')
-    const essay = await getEssayById(essayId)
-    if (!essay) {
-        return (
-            <div className="container mx-auto p-4">
-                <div className="alert alert-error">
-                    <span>Failed to fetch generated essay</span>
-                </div>
-            </div>
-        )
-    }
-    console.log('✅ Essay fetched successfully:', {
-        title: essay.title,
-        length: essay.content.length,
-        description: essay.description
-    })
 
     return (
-        <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Generated Essay</h1>
+        <div className="container mx-auto w-[800px]">
+            <h1 className="text-2xl font-bold mb-6">Write Essay Action Test</h1>
+            <form action={handleSubmit}>
+                <div className="space-y-6">
+                    {/* Author Selection */}
+                    <div className="form-control w-full">
+                        <label className="label" htmlFor="authorId">
+                            <span className="label-text">Select Author</span>
+                        </label>
+                        <select
+                            id="authorId"
+                            name="authorId"
+                            className="select select-bordered w-full"
+                            required
+                        >
+                            <option value="">Select an author...</option>
+                            {authors.map((author) => (
+                                <option key={author.id} value={JSON.stringify(author)}>
+                                    {author.name} ({author.model?.model_name})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-            <div className="prose max-w-none">
-                <h2>{essay.title}</h2>
-                <p className="text-gray-600 italic">{essay.description}</p>
-                <div className="whitespace-pre-wrap">{essay.content}</div>
-            </div>
+                    {/* Topic Selection */}
+                    <div className="form-control w-full">
+                        <label className="label" htmlFor="topicId">
+                            <span className="label-text">Select Topic</span>
+                        </label>
+                        <select
+                            id="topicId"
+                            name="topicId"
+                            className="select select-bordered w-full"
+                            required
+                        >
+                            <option value="">Select a topic...</option>
+                            {topics.map((topic) => (
+                                <option key={topic.id} value={JSON.stringify(topic)}>
+                                    {topic.title}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                        type="submit"
+                        className="btn btn-primary w-full"
+                    >
+                        Write Essay
+                    </button>
+                </div>
+            </form>
         </div>
     )
 }

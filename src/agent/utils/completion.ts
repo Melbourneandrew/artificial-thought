@@ -35,7 +35,6 @@ export async function getChatCompletion(
 export async function getStructuredCompletion<T extends z.ZodType>(
     messages: ChatCompletionMessageParam[],
     schema: T,
-    schemaName: string,
     model: string,
     completionUrl: string
 ): Promise<z.infer<T>> {
@@ -78,6 +77,7 @@ export async function getStructuredCompletion<T extends z.ZodType>(
             },
             max_tokens: 2000,
         });
+        console.log('🔍 Structured completion:', completion);
 
         return completion;
     } catch (error) {

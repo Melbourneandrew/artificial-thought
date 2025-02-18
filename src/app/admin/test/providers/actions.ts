@@ -1,7 +1,5 @@
 'use server'
 
-import { getChatCompletion } from '@/agent/utils/completion'
-import { Model } from '@/types'
 import { revalidatePath } from 'next/cache'
 import { getAllModels } from '@/utils/repository/ModelRepo'
 import { z } from 'zod'
@@ -12,14 +10,8 @@ type ActionState = {
     result: string
 }
 
-type TestResponse = {
-    greeting: string
-    funFact: string
-}
-
 export async function testProvider(prevState: ActionState, formData: FormData): Promise<ActionState> {
     try {
-        const url = formData.get('url') as string
         const modelId = formData.get('model_id') as string
 
         // Get the model details
@@ -47,7 +39,6 @@ export async function testProvider(prevState: ActionState, formData: FormData): 
         const structuredResult = await getStructuredCompletion<typeof schema>(
             messages,
             schema,
-            'TestResponse',
             model.model_name,
             model.model_url
         )
