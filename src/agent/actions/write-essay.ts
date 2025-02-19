@@ -7,9 +7,9 @@ import { createEssay } from "@/utils/repository/EssayRepo";
 import { getWriteEssayUserPrompt } from "@/agent/utils/prompts";
 
 const essaySchema = z.object({
-    title: z.string(),
-    description: z.string(),
-    content: z.string(),
+    title: z.string().describe('The title of the essay.'),
+    content: z.string().describe('The content of the essay.'),
+    description: z.string().describe('A short description of the essay.'),
 });
 
 export const writeEssay: AgentAction = async (author: Author, model: Model, topic: Topic) => {

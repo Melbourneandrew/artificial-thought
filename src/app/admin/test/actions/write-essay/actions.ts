@@ -47,9 +47,11 @@ export async function writeEssayAction(
         }
     }
 
-    redirect(`/essay/${essayId}`)
+
+    redirect(`/essays/${essayId}`)
     return {
         message: 'Essay written successfully',
-        essayId
+        essayId,
+        error: ''
     }
 } 
