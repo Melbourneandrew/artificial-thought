@@ -5,12 +5,6 @@ import PenIcon from '@/components/icons/PenIcon'
 export default function TestDashboard() {
     const testLinks = [
         {
-            href: '/admin/test/ui',
-            title: 'UI Components Test',
-            description: 'View and verify all UI elements',
-            Icon: EssayIcon
-        },
-        {
             href: '/admin/test/providers',
             title: 'Provider Tests',
             description: 'Test AI model providers and connections',
@@ -29,11 +23,23 @@ export default function TestDashboard() {
             Icon: PenIcon
         },
         {
+            href: '/admin/test/actions/write-topic',
+            title: 'Topic Writing Test',
+            description: 'Test topic generation functionality',
+            Icon: PenIcon
+        },
+        {
             href: '/admin/test/actions/full-system',
             title: 'Full System Test',
             description: 'Run comprehensive end-to-end testing',
             Icon: PlayIcon
-        }
+        },
+        {
+            href: '/admin/test/ui',
+            title: 'UI Components Test',
+            description: 'View and verify all UI elements',
+            Icon: EssayIcon
+        },
     ]
 
     return (

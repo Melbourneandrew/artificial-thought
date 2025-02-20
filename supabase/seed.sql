@@ -17,7 +17,8 @@ INSERT INTO prompts (prompt_key, prompt) VALUES
     ('mistral-system-prompt', 'You are a helpful assistant that produces essays on a given topic.'),
     ('llama-system-prompt', 'You are a helpful assistant that produces essays on a given topic.'),
     ('essay-writing-prompt', 'Write an essay about {{topic}}. The essay should be informative and engaging.'),
-    ('review-writing-prompt', 'Write a review of the essay "{{essay_title}}". The review should be informative and engaging. Here is the essay: {{essay_content}}');
+    ('review-writing-prompt', 'Write a review of the essay "{{essay_title}}". The review should be informative and engaging. Here is the essay: {{essay_content}}'),
+    ('topic-writing-prompt', 'Generate a ONE SENTENCE topic for an essay. The topic should be SHORT. The topic should be thought-provoking and focused enough for a detailed analysis. Previous topics: {{previous_topics}}');
 
 -- Insert sample authors
 INSERT INTO authors (id, name, model_id, system_prompt_key, profile_picture_url) VALUES

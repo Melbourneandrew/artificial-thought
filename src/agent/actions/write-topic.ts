@@ -3,13 +3,17 @@ import { AgentAction } from "@/agent/agent_types";
 import { getStructuredCompletion } from "@/agent/utils/completion";
 import { z } from "zod";
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import { createTopic } from "@/utils/repository/TopicRepo";
-
+import { createTopic, getPreviousTopics } from "@/utils/repository/TopicRepo";
+import { getWriteTopicUserPrompt } from "@/agent/utils/prompts";
 const topicSchema = z.object({
     title: z.string(),
 });
 
+
 export const writeTopic: AgentAction = async (author: Author, model: Model) => {
+    const previousTopics = await getPreviousTopics(5);
+    const userPrompt = await getWriteTopicUserPrompt(previousTopics);
+
     const messages: ChatCompletionMessageParam[] = [
         {
             role: "system",
@@ -17,16 +21,16 @@ export const writeTopic: AgentAction = async (author: Author, model: Model) => {
         },
         {
             role: "user",
-            content: "Generate an interesting and specific topic for an essay. The topic should be thought-provoking and focused enough for a detailed analysis."
+            content: userPrompt
         }
     ];
 
     const topicContent = await getStructuredCompletion(
         messages,
         topicSchema,
-        "Topic",
         model.model_name,
-        model.model_url
+        model.model_url,
+        "topic"
     );
 
     const topic = await createTopic({

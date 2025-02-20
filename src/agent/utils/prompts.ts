@@ -16,3 +16,10 @@ export async function getReviewEssayUserPrompt(essay: Essay): Promise<string> {
         .replace('{{essay_title}}', essay.title)
         .replace('{{essay_content}}', essay.content)
 }
+
+export async function getWriteTopicUserPrompt(previousTopics: Topic[]): Promise<string> {
+    const prompt = await getPromptByKey('topic-writing-prompt')
+    if (!prompt) throw new Error('Write topic prompt template not found')
+
+    return prompt.prompt.replace('{{previous_topics}}', previousTopics.map(topic => topic.title).join(', '))
+}

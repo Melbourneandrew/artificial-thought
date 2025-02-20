@@ -62,6 +62,21 @@ export async function getMostRecentTopic(): Promise<TopicWithEssays | null> {
     return topic as unknown as TopicWithEssays
 }
 
+export async function getPreviousTopics(n: number = 5): Promise<Topic[]> {
+    const supabase = await createClient()
+
+    const { data: topics, error } = await supabase
+        .from('topics')
+        .select('*')
+        .order('published_at', { ascending: false })
+        .limit(n)
+
+    if (error) throw error
+    if (!topics) return []
+
+    return topics as Topic[]
+}
+
 export async function getTopicBySlug(slug: string): Promise<TopicWithEssays | null> {
     const supabase = await createClient()
 
