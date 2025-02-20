@@ -8,11 +8,10 @@ import { getEssayById } from "@/utils/repository/EssayRepo";
 import { getReviewEssayUserPrompt } from "@/agent/utils/prompts";
 
 const reviewSchema = z.object({
-    content: z.string(),
+    content: z.string().describe("The review of the essay"),
 });
 
 export const reviewEssay: AgentAction = async (author: Author, model: Model, essayId: string) => {
-    // Fetch the essay to review
     const essay = await getEssayById(essayId);
     if (!essay) {
         throw new Error(`Essay with id ${essayId} not found`);
@@ -34,9 +33,9 @@ export const reviewEssay: AgentAction = async (author: Author, model: Model, ess
     const reviewContent = await getStructuredCompletion(
         messages,
         reviewSchema,
-        "Review",
         model.model_name,
-        model.model_url
+        model.model_url,
+        "review"
     );
 
     const review = await createReview({

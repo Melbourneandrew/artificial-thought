@@ -20,8 +20,8 @@ export default function AdminDashboard() {
         },
         {
             href: '/admin/test',
-            title: 'Test Runner',
-            description: 'Run system tests and view results',
+            title: 'System Tests',
+            description: 'Test providers, actions, ui, etc.',
             Icon: PlayIcon
         },
         {

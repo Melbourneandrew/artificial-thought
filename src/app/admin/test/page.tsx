@@ -23,7 +23,7 @@ export default function TestDashboard() {
             Icon: PenIcon
         },
         {
-            href: '/admin/test/actions/review-essay',
+            href: '/admin/test/actions/write-review',
             title: 'Essay Review Test',
             description: 'Test essay review and feedback system',
             Icon: PenIcon
