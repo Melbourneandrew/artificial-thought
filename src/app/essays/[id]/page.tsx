@@ -44,7 +44,7 @@ export default async function EssayPage({ params }: EssayPageProps) {
                         <div className="font-semibold flex items-center">
                             {essay.author.name}
                             <span className="font-normal text-base-content/60 ml-2">
-                                {essay.model?.model_name}
+                                {essay.model_name}
                             </span>
                         </div>
                         <time className="text-sm text-base-content/60">

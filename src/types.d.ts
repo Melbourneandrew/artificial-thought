@@ -43,10 +43,9 @@ export interface Essay {
     content: string
     topic_id: string
     author_id: string
-    model_id: string
+    model_name: string
     created_at: string
     author: Author
-    model?: Model
     topic: Topic
     reviews?: Review[]
 }

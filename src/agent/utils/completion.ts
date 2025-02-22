@@ -25,13 +25,19 @@ const providerMap: Record<string, Function> = {
     'default': getStructuredCompletionOpenAI
 };
 
+// Add this type definition after the imports
+type StructuredCompletionOutput<T> = {
+    model: string;
+    completion: T;
+};
+
 export async function getStructuredCompletion<T extends z.ZodType>(
     messages: ChatCompletionMessageParam[],
     schema: T,
     model: string,
     baseUrl: string,
     schemaName: string = "structured_output"
-): Promise<z.infer<T>> {
+): Promise<StructuredCompletionOutput<z.infer<T>>> {
     console.log('🔍 Getting structured completion for:', baseUrl);
 
     const apiKey = apiKeyMap[baseUrl];
@@ -50,7 +56,7 @@ async function getStructuredCompletionAnthropic<T extends z.ZodType>(
     baseUrl: string,
     apiKey: string,
     schemaName: string
-): Promise<z.infer<T>> {
+): Promise<StructuredCompletionOutput<z.infer<T>>> {
     const anthropicClient = createLLMClient({
         provider: "anthropic",
         apiKey
@@ -70,7 +76,10 @@ async function getStructuredCompletionAnthropic<T extends z.ZodType>(
         max_tokens: 2000,
     });
 
-    return completion;
+    return {
+        model,
+        completion: completion
+    };
 }
 
 async function getStructuredCompletionGroq<T extends z.ZodType>(
@@ -80,7 +89,7 @@ async function getStructuredCompletionGroq<T extends z.ZodType>(
     baseUrl: string,
     apiKey: string,
     schemaName: string
-): Promise<z.infer<T>> {
+): Promise<StructuredCompletionOutput<z.infer<T>>> {
     const openai = new OpenAI({
         baseURL: baseUrl,
         apiKey,
@@ -100,7 +109,10 @@ async function getStructuredCompletionGroq<T extends z.ZodType>(
         max_tokens: 2000,
     });
 
-    return completion;
+    return {
+        model,
+        completion: completion
+    };
 }
 
 async function getStructuredCompletionOpenAI<T extends z.ZodType>(
@@ -110,7 +122,7 @@ async function getStructuredCompletionOpenAI<T extends z.ZodType>(
     baseUrl: string,
     apiKey: string,
     schemaName: string
-): Promise<z.infer<T>> {
+): Promise<StructuredCompletionOutput<z.infer<T>>> {
     const openai = new OpenAI({
         apiKey,
         baseURL: baseUrl,
@@ -122,5 +134,8 @@ async function getStructuredCompletionOpenAI<T extends z.ZodType>(
         response_format: zodResponseFormat(schema, schemaName),
     });
 
-    return completion.choices[0].message.parsed;
+    return {
+        model: completion.model ?? model,
+        completion: completion.choices[0].message.parsed
+    };
 }

@@ -5,7 +5,8 @@ INSERT INTO models (id, model_name, model_url) VALUES
     ('a031d242-9568-4876-95ee-057da6bf4ff0', 'gemini-1.5-pro', 'https://generativelanguage.googleapis.com/v1beta/openai'),
     ('b131d242-9568-4876-95ee-057da6bf4ff0', 'deepseek-r1-distill-llama-70b', 'https://api.groq.com/openai/v1'),
     ('c231d242-9568-4876-95ee-057da6bf4ff0', 'mixtral-8x7b-32768', 'https://api.groq.com/openai/v1'),
-    ('d331d242-9568-4876-95ee-057da6bf4ff0', 'llama-3.3-70b-versatile', 'https://api.groq.com/openai/v1');
+    ('d331d242-9568-4876-95ee-057da6bf4ff0', 'llama-3.3-70b-versatile', 'https://api.groq.com/openai/v1'),
+    ('e431d242-9568-4876-95ee-057da6bf4ff0', 'mistral-large-latest', 'https://api.mistral.ai/v1');
 
 
 -- Insert sample prompts
@@ -180,7 +181,7 @@ INSERT INTO topics (id, title, slug, created_by_author_id, created_by_user_name,
 --     'Lorem ipsum dolor sit amet...',
 --     'c1234567-89ab-cdef-0123-456789abcdef',
 --     '28aa367b-d5ae-48ac-b235-3d216cd1738c'); -- Llama
-INSERT INTO essays (id, title, description, content, topic_id, author_id, model_id)
+INSERT INTO essays (id, title, description, content, topic_id, author_id, model_name)
 SELECT 
     gen_random_uuid(),
     t.title || ' - Analysis by ' || a.name,
@@ -188,7 +189,7 @@ SELECT
     'Lorem ipsum dolor sit amet...',
     t.id,
     a.id,
-    a.model_id
+    'model-name-123'
 FROM 
     topics t
     CROSS JOIN authors a;

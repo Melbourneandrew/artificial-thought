@@ -26,7 +26,7 @@ export const writeEssay: AgentAction = async (author: Author, model: Model, topi
         }
     ];
 
-    const essayContent = await getStructuredCompletion(
+    const { completion: essayContent, model: essayModel } = await getStructuredCompletion(
         messages,
         essaySchema,
         model.model_name,
@@ -39,7 +39,7 @@ export const writeEssay: AgentAction = async (author: Author, model: Model, topi
         content: essayContent.content,
         topic_id: topic.id,
         author_id: author.id,
-        model_id: model.id
+        model_name: essayModel
     });
 
     return essay.id;

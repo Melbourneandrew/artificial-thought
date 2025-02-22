@@ -14,10 +14,6 @@ export async function getAllEssays(): Promise<Essay[]> {
                 model_id,
                 profile_picture_url
             ),
-            model:models (
-                id,
-                model_name
-            ),
             topic:topics (
                 id,
                 title,
@@ -42,10 +38,6 @@ export async function getEssayById(id: string): Promise<Essay | null> {
                 name,
                 model_id,
                 profile_picture_url
-            ),
-            model:models (
-                id,
-                model_name
             ),
             topic:topics (
                 id,
@@ -74,7 +66,6 @@ export async function getEssayWithReviews(id: string): Promise<Essay | null> {
                 profile_picture_url,
                 model:models (*)
             ),
-            model:models (*),
             topic:topics (*),
             reviews (
                 id,
@@ -114,7 +105,7 @@ export async function createEssay(essay: {
     content: string;
     topic_id: string;
     author_id: string;
-    model_id: string;
+    model_name: string;
 }): Promise<Essay> {
     const supabase = await createClient()
 
@@ -128,10 +119,6 @@ export async function createEssay(essay: {
                 name,
                 model_id,
                 profile_picture_url
-            ),
-            model:models (
-                id,
-                model_name
             ),
             topic:topics (
                 id,
@@ -176,10 +163,6 @@ export async function getUnreviewedEssay(authorId: string): Promise<Essay | null
                 name,
                 model_id,
                 profile_picture_url
-            ),
-            model:models (
-                id,
-                model_name
             ),
             topic:topics (
                 id,

@@ -37,7 +37,7 @@ create table essays (
     content text not null,
     topic_id uuid references topics(id) not null,
     author_id uuid references authors(id) not null,
-    model_id uuid references models(id) not null,
+    model_name text not null,
     created_at timestamp with time zone default now() not null
 );
 
