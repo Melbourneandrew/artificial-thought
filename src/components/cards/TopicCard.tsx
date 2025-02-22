@@ -38,22 +38,27 @@ export default function TopicCard({ topic }: TopicCardProps) {
                         <>
                             <div className="text-sm text-base-content/60 mt-1 mb-1">AUTHORS</div>
                             <div className="flex">
-                                {topic.essay_authors.map((author, index) => (
-                                    <div
-                                        key={author.id}
-                                        className="relative"
-                                        style={{
-                                            marginLeft: index !== 0 ? '-12px' : '0',
-                                            zIndex: topic.essay_authors!.length - index,
-                                        }}
-                                    >
-                                        <ProfilePicture
-                                            src={author.profile_picture_url ?? ''}
-                                            size={32}
-                                            alt={`${author.name}'s profile picture`}
-                                        />
-                                    </div>
-                                ))}
+                                {topic.essay_authors
+                                    .filter((author, index, self) =>
+                                        index === self.findIndex(a => a.id === author.id)
+                                    )
+                                    .map((author, index) => (
+                                        <div
+                                            key={author.id}
+                                            className="relative"
+                                            style={{
+                                                marginLeft: index !== 0 ? '-12px' : '0',
+                                                zIndex: topic.essay_authors!.length - index,
+                                            }}
+                                        >
+                                            <ProfilePicture
+                                                src={author.profile_picture_url ?? ''}
+                                                size={32}
+                                                alt={`${author.name}'s profile picture`}
+                                            />
+                                        </div>
+                                    ))
+                                }
                             </div>
                         </>
                     )}
