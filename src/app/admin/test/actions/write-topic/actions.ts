@@ -5,7 +5,7 @@ import { Author } from '@/types'
 
 export type WriteTopicState = {
     message: string
-    topicId?: string
+    topicSlug?: string
     error?: string
 }
 
@@ -13,7 +13,7 @@ export async function writeTopicAction(
     prevState: WriteTopicState,
     formData: FormData
 ): Promise<WriteTopicState> {
-    let topicId: string;
+    let topicSlug: string;
 
     try {
         const authorId = formData.get('authorId') as string
@@ -35,7 +35,7 @@ export async function writeTopicAction(
             }
         }
 
-        topicId = await writeTopic(author, author.model)
+        topicSlug = await writeTopic(author, author.model)
 
     } catch (error) {
         console.error('Error writing topic:', error)
@@ -45,10 +45,10 @@ export async function writeTopicAction(
         }
     }
 
-    redirect(`/topics/${topicId}`)
+    redirect(`/topics/${topicSlug}`)
     return {
         message: 'Topic written successfully',
-        topicId,
+        topicSlug,
         error: ''
     }
 } 

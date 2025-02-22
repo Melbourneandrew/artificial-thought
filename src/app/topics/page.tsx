@@ -3,7 +3,6 @@ import { getPublishedTopics } from '@/utils/repository/TopicRepo'
 
 export default async function TopicsPage() {
     const topics = await getPublishedTopics()
-    console.log(topics)
 
     // Group topics by date
     const groupedTopics = topics.reduce((groups, topic) => {

@@ -35,8 +35,9 @@ export const writeTopic: AgentAction = async (author: Author, model: Model) => {
 
     const topic = await createTopic({
         title: topicContent.completion.title,
+        created_by_author_id: author.id,
         published_at: new Date().toISOString()
     });
 
-    return topic.id;
+    return topic.slug;
 }
