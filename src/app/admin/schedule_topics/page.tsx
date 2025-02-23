@@ -5,7 +5,6 @@ import { getUserCreatedTopics } from '@/utils/repository/TopicRepo'
 
 export default async function ScheduleTopicsPage() {
     const topics = await getUserCreatedTopics()
-    console.log('topics from page', topics)
 
     return (
         <div className="container mx-auto mt-4">
