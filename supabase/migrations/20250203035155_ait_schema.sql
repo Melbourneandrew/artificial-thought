@@ -53,12 +53,13 @@ create table reviews (
 create table tasks (
     id uuid primary key default gen_random_uuid(),
     prompt text not null,
-    topic_id uuid references topics(id) not null,
-    assigned_author_id uuid references authors(id) not null,
-    target_essay_id uuid references essays(id),
+    author_id uuid references authors(id) not null,
+    topic_id uuid references topics(id),
+    essay_id uuid references essays(id),
+    review_id uuid references reviews(id),
+    parent_task_id uuid references tasks(id),
     created_at timestamp with time zone default now() not null,
-    completed_at timestamp with time zone,
-    unique(assigned_author_id, target_essay_id)
+    completed_at timestamp with time zone
 );
 
 
@@ -68,10 +69,6 @@ create index essays_author_id_idx on essays(author_id);
 create index reviews_essay_id_idx on reviews(essay_id);
 create index reviews_author_id_idx on reviews(author_id);
 
--- Create indexes for task foreign keys
-create index tasks_assigned_author_id_idx on tasks(assigned_author_id);
-create index tasks_target_essay_id_idx on tasks(target_essay_id);
-
 CREATE FUNCTION public.generate_review_content(essay_title TEXT, essay_description TEXT)
 RETURNS TEXT AS $$
 BEGIN
@@ -79,3 +76,61 @@ BEGIN
             essay_description || '. The analysis is thorough and provides valuable insights into the topic.';
 END;
 $$ LANGUAGE plpgsql;
+
+-- Drop existing trigger and function if they exist
+drop trigger if exists handle_task_webhook on tasks;
+drop function if exists handle_task_webhook_fn;
+
+-- Create the trigger function
+create or replace function handle_task_webhook_fn()
+returns trigger as $$
+begin
+  perform net.http_post(
+    url:='http://host.docker.internal:3000/handle_task'::text,
+    body:=row_to_json(NEW)::jsonb
+  );
+  return NEW;
+end;
+$$ language plpgsql;
+
+-- Create the trigger
+create trigger handle_task_webhook
+  after insert on tasks
+  for each row
+  execute function handle_task_webhook_fn();
+
+
+-- Create a function that returns a task tree
+CREATE OR REPLACE FUNCTION get_task_tree(root_task_id uuid)
+RETURNS TABLE (
+    id uuid,
+    prompt text,
+    author_id uuid,
+    topic_id uuid,
+    essay_id uuid,
+    review_id uuid,
+    parent_task_id uuid,
+    created_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    level int
+) AS $$
+WITH RECURSIVE task_tree AS (
+    -- Base case: get the root task
+    SELECT 
+        t.*,
+        0 as level
+    FROM tasks t
+    WHERE t.id = root_task_id
+
+    UNION ALL
+
+    -- Recursive case: get all child tasks
+    SELECT 
+        t.*,
+        tt.level + 1
+    FROM tasks t
+    INNER JOIN task_tree tt ON t.parent_task_id = tt.id
+)
+SELECT * FROM task_tree
+ORDER BY level, created_at;
+$$ LANGUAGE sql;

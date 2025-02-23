@@ -17,7 +17,7 @@ export const writeTopic: AgentAction = async (author: Author, model: Model) => {
     const messages: ChatCompletionMessageParam[] = [
         {
             role: "system",
-            content: author.system_prompt_key
+            content: author.system_prompt?.prompt || ""
         },
         {
             role: "user",
@@ -39,5 +39,5 @@ export const writeTopic: AgentAction = async (author: Author, model: Model) => {
         published_at: new Date().toISOString()
     });
 
-    return topic.slug;
+    return topic;
 }

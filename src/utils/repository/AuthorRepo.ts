@@ -18,6 +18,19 @@ export async function getAllAuthors(): Promise<Author[]> {
     return authors
 }
 
+export async function getAuthorById(id: string): Promise<Author | null> {
+    const supabase = await createClient()
+
+    const { data: author, error } = await supabase
+        .from('authors')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+    if (error) throw error
+    return author
+}
+
 export async function getAuthorWithEssaysAndReviews(id: string): Promise<Author | null> {
     const supabase = await createClient()
 

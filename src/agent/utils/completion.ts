@@ -39,6 +39,13 @@ export async function getStructuredCompletion<T extends z.ZodType>(
     schemaName: string = "structured_output"
 ): Promise<StructuredCompletionOutput<z.infer<T>>> {
     console.log('🔍 Getting structured completion for:', baseUrl);
+    if (process.env.TASK_TESTING_MODE === 'true') {
+        const dummyData = generateDummyData(schema);
+        return {
+            model,
+            completion: dummyData
+        };
+    }
 
     const apiKey = apiKeyMap[baseUrl];
     if (!apiKey) {
@@ -138,4 +145,28 @@ async function getStructuredCompletionOpenAI<T extends z.ZodType>(
         model: completion.model ?? model,
         completion: completion.choices[0].message.parsed
     };
+}
+
+function generateDummyData(schema: z.ZodType): any {
+    if (schema instanceof z.ZodString) {
+        return "TEST_STRING";
+    } else if (schema instanceof z.ZodNumber) {
+        return 42;
+    } else if (schema instanceof z.ZodBoolean) {
+        return true;
+    } else if (schema instanceof z.ZodArray) {
+        return [generateDummyData(schema.element)];
+    } else if (schema instanceof z.ZodObject) {
+        const shape = schema.shape;
+        const dummyObj: Record<string, any> = {};
+        for (const [key, value] of Object.entries(shape)) {
+            dummyObj[key] = generateDummyData(value as z.ZodType);
+        }
+        return dummyObj;
+    } else if (schema instanceof z.ZodEnum) {
+        return schema.options[0];
+    } else if (schema instanceof z.ZodLiteral) {
+        return schema.value;
+    }
+    return "TEST_FALLBACK";
 }

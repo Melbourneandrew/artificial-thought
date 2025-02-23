@@ -260,9 +260,6 @@ export async function createTopic(params: Omit<Topic, 'id' | 'created_at' | 'slu
     if (params.published_at) {
         const publishDate = new Date(params.published_at)
         const hasExistingTopic = await hasTopicOnDate(publishDate)
-        if (hasExistingTopic) {
-            throw new Error('A topic is already scheduled for this date')
-        }
     }
 
     const baseSlug = slugify(params.title)

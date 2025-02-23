@@ -37,7 +37,8 @@ export async function writeEssayAction(
             }
         }
 
-        essayId = await writeEssay(author, author.model, topic)
+        const essay = await writeEssay(author, author.model, topic)
+        essayId = essay.id
 
     } catch (error) {
         console.error('Error writing essay:', error)

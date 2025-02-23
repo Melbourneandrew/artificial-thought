@@ -20,5 +20,5 @@ export type FunctionCallResult = {
 };
 
 export interface AgentAction {
-    (author: Author, model: Model, ...args: any[]): Promise<string>
+    (author: Author, model: Model, ...args: any[]): Promise<any>
 }

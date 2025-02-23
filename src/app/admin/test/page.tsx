@@ -29,7 +29,7 @@ export default function TestDashboard() {
             Icon: PenIcon
         },
         {
-            href: '/admin/test/actions/full-system',
+            href: '/admin/test/full-system',
             title: 'Full System Test',
             description: 'Run comprehensive end-to-end testing',
             Icon: PlayIcon

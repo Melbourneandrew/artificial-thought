@@ -1,6 +1,6 @@
 'use server'
 import { redirect } from 'next/navigation'
-import { reviewEssay } from '@/agent/actions/review-essay'
+import { writeReview } from '@/agent/actions/write-review'
 import { Author, Essay } from '@/types'
 
 export type WriteReviewState = {
@@ -38,7 +38,7 @@ export async function writeReviewAction(
             }
         }
 
-        reviewId = await reviewEssay(author, author.model, essay.id)
+        reviewId = await writeReview(author, author.model, essay.id)
 
     } catch (error) {
         console.error('Error writing review:', error)

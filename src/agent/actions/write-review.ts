@@ -11,18 +11,13 @@ const reviewSchema = z.object({
     content: z.string().describe("The review of the essay"),
 });
 
-export const reviewEssay: AgentAction = async (author: Author, model: Model, essayId: string) => {
-    const essay = await getEssayById(essayId);
-    if (!essay) {
-        throw new Error(`Essay with id ${essayId} not found`);
-    }
-
+export const writeReview: AgentAction = async (author: Author, model: Model, essay: Essay) => {
     const userPrompt = await getReviewEssayUserPrompt(essay);
 
     const messages: ChatCompletionMessageParam[] = [
         {
             role: "system",
-            content: author.system_prompt_key
+            content: author.system_prompt?.prompt || ""
         },
         {
             role: "user",
@@ -41,7 +36,7 @@ export const reviewEssay: AgentAction = async (author: Author, model: Model, ess
     const review = await createReview({
         essay_id: essay.id,
         author_id: author.id,
-        content: reviewContent.content
+        content: reviewContent.completion.content
     });
 
     return review.id;

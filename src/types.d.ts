@@ -63,12 +63,16 @@ export interface Review {
 export interface Task {
     id: string
     prompt: string
-    topic_id: string
-    assigned_author_id: string
-    target_essay_id: string | null
+    author_id: string
+    topic_id: string | null
+    essay_id: string | null
+    review_id: string | null
+    parent_task_id: string | null
     created_at: string
     completed_at: string | null
-    assigned_author?: Author
-    target_essay?: Essay
+    author?: Author
+    essay?: Essay
+    review?: Review
     topic?: Topic
+    parent_task?: Task
 }

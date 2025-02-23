@@ -1,4 +1,4 @@
-import { Author, Model, Topic } from "@/types";
+import { Author, Essay, Model, Topic } from "@/types";
 import { AgentAction } from "@/agent/agent_types";
 import { getStructuredCompletion } from "@/agent/utils/completion";
 import { z } from "zod";
@@ -12,13 +12,13 @@ const essaySchema = z.object({
     description: z.string().describe('A short description of the essay.'),
 });
 
-export const writeEssay: AgentAction = async (author: Author, model: Model, topic: Topic) => {
+export const writeEssay: AgentAction = async (author: Author, model: Model, topic: Topic): Promise<Essay> => {
     const userPrompt = await getWriteEssayUserPrompt(topic);
 
     const messages: ChatCompletionMessageParam[] = [
         {
             role: "system",
-            content: author.system_prompt_key
+            content: author.system_prompt?.prompt || ""
         },
         {
             role: "user",
@@ -42,6 +42,6 @@ export const writeEssay: AgentAction = async (author: Author, model: Model, topi
         model_name: essayModel
     });
 
-    return essay.id;
+    return essay;
 }
 
