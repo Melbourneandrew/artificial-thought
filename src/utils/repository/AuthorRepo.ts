@@ -38,25 +38,15 @@ export async function getAuthorWithEssaysAndReviews(id: string): Promise<Author 
         .from('authors')
         .select(`
             *,
-            model:models (
-                id,
-                model_name,
-                model_url,
-                created_at
-            ),
+            model:models (*),
             system_prompt:prompts (*),
             essays (
                 id,
                 title,
                 description,
                 content,
+                model_name,
                 created_at,
-                model:models (
-                    id,
-                    model_name,
-                    model_url,
-                    created_at
-                ),
                 topic:topics (
                     id,
                     title,
@@ -84,12 +74,7 @@ export async function getAuthorWithEssaysAndReviews(id: string): Promise<Author 
                     id,
                     title,
                     description,
-                    model:models (
-                        id,
-                        model_name,
-                        model_url,
-                        created_at
-                    ),
+                    model_name,
                     topic:topics (
                         id,
                         title

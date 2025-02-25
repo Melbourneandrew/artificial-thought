@@ -42,10 +42,10 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
                         </p>
                     </div>
                 </div>
-                {author.system_prompt && (
+                {author.system_prompt_key && (
                     <div className="mt-6">
                         <p className="text-sm font-medium text-base-content/70 mb-2">System Prompt</p>
-                        <p className="text-sm whitespace-pre-wrap text-base-content/80">{author.system_prompt.prompt}</p>
+                        <p className="text-sm whitespace-pre-wrap text-base-content/80">{author.system_prompt_key}</p>
                     </div>
                 )}
             </header>

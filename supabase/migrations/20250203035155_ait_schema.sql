@@ -62,6 +62,13 @@ create table tasks (
     completed_at timestamp with time zone
 );
 
+create table task_logs (
+    id uuid primary key default gen_random_uuid(),
+    task_id uuid references tasks(id) not null,
+    created_at timestamp with time zone default now() not null,
+    content text not null
+);
+
 
 -- Create indexes for foreign keys to improve query performance
 create index essays_topic_id_idx on essays(topic_id);

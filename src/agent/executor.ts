@@ -4,20 +4,27 @@ import { writeTopic } from "./actions/write-topic";
 import { writeReview } from "./actions/write-review";
 import { requestEssays } from "./actions/request-essays";
 import { requestReviews } from "./actions/request-reviews";
-
+import { completeTask, createTaskLog } from "@/utils/repository/TaskRepo";
 import { AgentAction } from "./agent_types";
 
 export async function executeTask(task: Task) {
     const { author } = task;
-    if (!author) throw new Error("Task has no author");
+    try {
+        if (!author) throw new Error("Task has no author");
 
-    const { agentAction, params } = await getAgentAction(task);
+        const { agentAction, params } = await getAgentAction(task);
 
-    console.log("Executing task: ", task);
-    console.log("Agent action: ", agentAction);
-    console.log("Params: ", params);
+        console.log("Executing task: ", task);
+        console.log("Agent action: ", agentAction);
+        console.log("Params: ", params);
 
-    await agentAction(author, author.model!, ...params);
+        await agentAction(author, author.model!, ...params);
+        await completeTask(task.id);
+    } catch (error) {
+        console.error("Error executing task: ", error);
+        await createTaskLog(task.id, error instanceof Error ? error.message : String(error));
+        await completeTask(task.id);
+    }
 }
 
 export async function getAgentAction(task: Task): Promise<{ agentAction: AgentAction, params: any }> {

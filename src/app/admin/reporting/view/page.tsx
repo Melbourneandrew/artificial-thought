@@ -33,10 +33,10 @@ export default async function TaskTreeView({
     return (
         <div className="p-4">
             <h1 className="text-2xl font-bold mb-4">Task Tree</h1>
-            <div className="grid grid-flow-col auto-cols-fr gap-4">
+            <div className="flex gap-4 overflow-x-auto">
                 {/* Group tasks by level */}
                 {Array.from(new Set(tasks.map(task => task.level))).map(level => (
-                    <div key={level} className="space-y-4">
+                    <div key={level} className="space-y-4 min-w-[400px]">
                         <h3 className="text-lg font-semibold mb-2">Level {level}</h3>
                         {tasks
                             .filter(task => task.level === level)
@@ -70,7 +70,7 @@ export default async function TaskTreeView({
                                                 >
                                                     Author
                                                 </a>
-                                            )}``
+                                            )}
                                         </div>
                                         <div className="text-sm text-base-content/70">
                                             Created: {new Date(task.created_at).toLocaleString()}

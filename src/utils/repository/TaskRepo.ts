@@ -193,3 +193,31 @@ export async function getPendingTasksForAuthor(authorId: string): Promise<Task[]
 
     return tasks
 }
+
+export async function getRootTasks(): Promise<Task[]> {
+    const supabase = await createClient()
+
+    const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .is('parent_task_id', null)
+        .order('created_at', { ascending: false })
+
+    if (error) throw error
+    if (!tasks) return []
+
+    return tasks
+}
+
+export async function createTaskLog(taskId: string, content: string): Promise<void> {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+        .from('task_logs')
+        .insert({
+            task_id: taskId,
+            content: content
+        })
+
+    if (error) throw error
+}

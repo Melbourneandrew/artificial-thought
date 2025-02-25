@@ -47,5 +47,5 @@ export async function createTopicTaskAction(
         }
     }
 
-    redirect(`/admin/test/full-system/view?taskId=${taskId}`)
+    redirect(`/admin/test/reporting/view?taskId=${taskId}`)
 } 
