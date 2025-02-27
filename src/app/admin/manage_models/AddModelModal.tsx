@@ -1,22 +1,19 @@
 'use client'
 
-import { Model } from '@/types'
 import { useActionState } from 'react'
 import { handleCreateModel } from './actions'
-import { useRouter } from 'next/navigation'
 
 interface AddModelModalProps { }
 
 export default function AddModelModal() {
-    const router = useRouter()
-    const [createState, createAction] = useActionState(handleCreateModel, { loading: false, error: '' })
+    const [createState, createAction, pending] = useActionState(handleCreateModel, { loading: false, error: '' })
 
     return (
         <dialog id="add-model-modal" className="modal">
             <div className="modal-box">
                 <h3 className="font-bold text-lg">Add New Model</h3>
                 <form action={async (formData: FormData) => {
-                    createAction(formData)
+                    await createAction(formData)
                     if (!createState.error) {
                         window.location.reload();
                         (document.getElementById('add-model-modal') as HTMLDialogElement).close();
@@ -42,16 +39,16 @@ export default function AddModelModal() {
                     <div className="modal-action">
                         <button
                             type="submit"
-                            className="btn btn-primary"
-                            disabled={createState?.loading}
+                            className="btn btn-primary w-[100px]"
+                            disabled={pending}
                         >
-                            {createState?.loading && <span className="loading loading-spinner"></span>}
-                            {createState?.loading ? 'Creating...' : 'Create'}
+                            {pending && <span className="loading loading-spinner"></span>}
+                            {pending ? 'Creating...' : 'Create'}
                         </button>
                         <button
                             type="button"
                             className="btn"
-                            disabled={createState?.loading}
+                            disabled={pending}
                             onClick={() => {
                                 (document.getElementById('add-model-modal') as HTMLDialogElement).close()
                             }}

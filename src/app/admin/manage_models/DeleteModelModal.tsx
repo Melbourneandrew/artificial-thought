@@ -3,7 +3,7 @@
 import { Model } from '@/types'
 import { useActionState } from 'react'
 import { handleDeleteModel } from './actions'
-import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 interface DeleteModelModalProps {
     isOpen: boolean
@@ -16,8 +16,13 @@ export default function DeleteModelModal({
     selectedModel,
     onClose
 }: DeleteModelModalProps) {
-    const router = useRouter()
-    const [deleteState, deleteAction] = useActionState(handleDeleteModel, { loading: false, error: '' })
+    const [deleteState, deleteAction, pending] = useActionState(handleDeleteModel, { loading: false, error: '' })
+
+    useEffect(() => {
+        if (!pending && !deleteState.error && deleteState.loading === false) {
+            onClose()
+        }
+    }, [deleteState, pending])
 
     if (!selectedModel) return null
 
@@ -27,11 +32,7 @@ export default function DeleteModelModal({
                 <h3 className="font-bold text-lg">Confirm Delete</h3>
                 <p>Are you sure you want to delete {selectedModel.model_name}?</p>
                 <form action={async (formData: FormData) => {
-                    deleteAction(formData)
-                    if (!deleteState.error) {
-                        onClose()
-                        window.location.reload()
-                    }
+                    await deleteAction(formData)
                 }}>
                     {deleteState?.error && (
                         <div className="alert alert-error mt-4">
@@ -43,15 +44,15 @@ export default function DeleteModelModal({
                         <button
                             type="submit"
                             className="btn btn-error"
-                            disabled={deleteState?.loading}
+                            disabled={pending}
                         >
-                            {deleteState?.loading && <span className="loading loading-spinner"></span>}
-                            {deleteState?.loading ? 'Deleting...' : 'Delete'}
+                            {pending && <span className="loading loading-spinner"></span>}
+                            {pending ? 'Deleting...' : 'Delete'}
                         </button>
                         <button
                             type="button"
                             className="btn"
-                            disabled={deleteState?.loading}
+                            disabled={pending}
                             onClick={onClose}
                         >
                             Cancel

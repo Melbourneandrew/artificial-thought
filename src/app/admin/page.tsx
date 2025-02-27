@@ -3,6 +3,7 @@ import PromptIcon from '@/components/icons/PromptIcon'
 import ModelIcon from '@/components/icons/ModelIcon'
 import PlayIcon from '@/components/icons/PlayIcon'
 import CalendarIcon from '@/components/icons/CalendarIcon'
+import ReportIcon from '@/components/icons/ReportIcon'
 
 export default function AdminDashboard() {
     const adminLinks = [
@@ -29,6 +30,12 @@ export default function AdminDashboard() {
             title: 'Topic Scheduler',
             description: 'Schedule and manage content topics',
             Icon: CalendarIcon
+        },
+        {
+            href: '/admin/reporting',
+            title: 'Reporting',
+            description: 'View system analytics and reports',
+            Icon: ReportIcon
         }
     ]
 
@@ -36,7 +43,7 @@ export default function AdminDashboard() {
         <div className="container mx-auto p-8">
             <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {adminLinks.map((link) => (
                     <Link
                         key={link.href}

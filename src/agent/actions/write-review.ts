@@ -12,6 +12,14 @@ const reviewSchema = z.object({
 });
 
 export const writeReview: AgentAction = async (author: Author, model: Model, essay: Essay) => {
+    if (!essay.content) {
+        const essayId = essay.id;
+        essay = await getEssayById(essayId) as Essay;
+        if (!essay) {
+            throw new Error(`Essay ${essayId} not found`);
+        }
+    }
+
     const userPrompt = await getReviewEssayUserPrompt(essay);
 
     const messages: ChatCompletionMessageParam[] = [

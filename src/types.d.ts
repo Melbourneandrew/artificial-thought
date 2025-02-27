@@ -34,6 +34,7 @@ export interface Author {
     essays?: Essay[]
     reviews?: Review[]
     system_prompt?: Prompt
+    bio?: string
 }
 
 export interface Essay {

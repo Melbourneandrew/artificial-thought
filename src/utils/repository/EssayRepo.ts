@@ -1,29 +1,47 @@
 import { createClient } from '@/utils/supabase/server'
 import { Essay } from '@/types'
 
-export async function getAllEssays(): Promise<Essay[]> {
+export async function getAllEssays(page: number = 1, pageSize: number = 25): Promise<{
+    essays: Essay[];
+    total: number;
+}> {
     const supabase = await createClient()
 
-    const { data: essays, error } = await supabase
-        .from('essays')
-        .select(`
-            *,
-            author:authors (
-                id,
-                name,
-                model_id,
-                profile_picture_url
-            ),
-            topic:topics (
-                id,
-                title,
-                slug
-            )
-        `)
-        .order('created_at', { ascending: false })
+    // Calculate offset
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    const [{ count }, { data: essays, error }] = await Promise.all([
+        // Get total count
+        supabase
+            .from('essays')
+            .select('*', { count: 'exact', head: true }),
+        // Get paginated essays
+        supabase
+            .from('essays')
+            .select(`
+                *,
+                author:authors (
+                    id,
+                    name,
+                    model_id,
+                    profile_picture_url
+                ),
+                topic:topics (
+                    id,
+                    title,
+                    slug
+                )
+            `)
+            .order('created_at', { ascending: false })
+            .range(from, to)
+    ])
 
     if (error) throw error
-    return essays as Essay[]
+    return {
+        essays: essays as Essay[],
+        total: count || 0
+    }
 }
 
 export async function getEssayById(id: string): Promise<Essay | null> {
@@ -130,18 +148,6 @@ export async function createEssay(essay: {
 
     if (error) throw error
     return newEssay as Essay
-}
-
-export async function getRandomEssay(): Promise<Essay | null> {
-    const essays = await getAllEssays()
-
-    if (essays.length === 0) {
-        console.error('No essays available')
-        return null
-    }
-
-    const randomIndex = Math.floor(Math.random() * essays.length)
-    return essays[randomIndex]
 }
 
 export async function getUnreviewedEssay(authorId: string): Promise<Essay | null> {

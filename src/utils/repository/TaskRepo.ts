@@ -221,3 +221,25 @@ export async function createTaskLog(taskId: string, content: string): Promise<vo
 
     if (error) throw error
 }
+
+export interface TaskLog {
+    id: string
+    content: string
+    created_at: string
+    task_id: string
+}
+
+export async function getTaskLogs(taskId: string): Promise<TaskLog[]> {
+    const supabase = await createClient()
+
+    const { data: logs, error } = await supabase
+        .from('task_logs')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: true })
+
+    if (error) throw error
+    if (!logs) return []
+
+    return logs
+}

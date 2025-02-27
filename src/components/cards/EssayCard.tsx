@@ -7,6 +7,7 @@ interface EssayCardProps {
 }
 
 export default function EssayCard({ essay }: EssayCardProps) {
+    console.log(essay)
     return (
         <Link href={`/essays/${essay.id}`} className="block no-underline">
             <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
@@ -27,8 +28,13 @@ export default function EssayCard({ essay }: EssayCardProps) {
                             size={32}
                             alt={`${essay.author?.name ?? 'Anonymous'}'s profile picture`}
                         />
-                        <span className="text-sm text-base-content/80">
+                        <span className="text-base text-base-content/80">
                             {essay.author?.name ?? 'Anonymous'}
+                            {essay.model_name && (
+                                <span className="text-base-content/60 ml-2">
+                                    · {essay.model_name}
+                                </span>
+                            )}
                         </span>
                     </div>
 

@@ -38,7 +38,7 @@ export async function writeReviewAction(
             }
         }
 
-        reviewId = await writeReview(author, author.model, essay.id)
+        reviewId = await writeReview(author, author.model, essay)
 
     } catch (error) {
         console.error('Error writing review:', error)

@@ -1,8 +1,52 @@
 import TopicCard from '@/components/cards/TopicCard'
 import { getPublishedTopics } from '@/utils/repository/TopicRepo'
+import Link from 'next/link'
 
-export default async function TopicsPage() {
-    const topics = await getPublishedTopics()
+const TOPICS_PER_PAGE = 10
+
+export default async function TopicsPage({
+    searchParams,
+}: {
+    searchParams: { page?: string }
+}) {
+    const currentPage = Number(searchParams.page) || 1
+    const { topics, total } = await getPublishedTopics(currentPage, TOPICS_PER_PAGE)
+
+    const totalPages = Math.ceil(total / TOPICS_PER_PAGE)
+
+    // Generate pagination numbers
+    const generatePaginationNumbers = () => {
+        const numbers = []
+        const showEllipsis = totalPages > 7
+
+        if (showEllipsis) {
+            // Always show first page
+            numbers.push(1)
+
+            if (currentPage > 3) {
+                numbers.push('...')
+            }
+
+            // Show pages around current page
+            for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                numbers.push(i)
+            }
+
+            if (currentPage < totalPages - 2) {
+                numbers.push('...')
+            }
+
+            // Always show last page
+            numbers.push(totalPages)
+        } else {
+            // Show all pages if total pages are 7 or less
+            for (let i = 1; i <= totalPages; i++) {
+                numbers.push(i)
+            }
+        }
+
+        return numbers
+    }
 
     // Group topics by date
     const groupedTopics = topics.reduce((groups, topic) => {
@@ -42,6 +86,42 @@ export default async function TopicsPage() {
                     </div>
                 ))}
             </div>
+
+            {totalPages > 1 && (
+                <div className="flex justify-center mt-12">
+                    <div className="join">
+                        {currentPage > 1 && (
+                            <Link
+                                href={`/topics?page=${currentPage - 1}`}
+                                className="join-item btn btn-outline"
+                            >
+                                «
+                            </Link>
+                        )}
+                        {generatePaginationNumbers().map((number, index) => (
+                            number === '...' ? (
+                                <button key={`ellipsis-${index}`} className="join-item btn btn-outline btn-disabled">...</button>
+                            ) : (
+                                <Link
+                                    key={number}
+                                    href={`/topics?page=${number}`}
+                                    className={`join-item btn ${currentPage === number ? 'btn-primary' : 'btn-outline'}`}
+                                >
+                                    {number}
+                                </Link>
+                            )
+                        ))}
+                        {currentPage < totalPages && (
+                            <Link
+                                href={`/topics?page=${currentPage + 1}`}
+                                className="join-item btn btn-outline"
+                            >
+                                »
+                            </Link>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

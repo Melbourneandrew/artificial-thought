@@ -14,10 +14,6 @@ export async function executeTask(task: Task) {
 
         const { agentAction, params } = await getAgentAction(task);
 
-        console.log("Executing task: ", task);
-        console.log("Agent action: ", agentAction);
-        console.log("Params: ", params);
-
         await agentAction(author, author.model!, ...params);
         await completeTask(task.id);
     } catch (error) {
@@ -58,7 +54,6 @@ export async function getAgentAction(task: Task): Promise<{ agentAction: AgentAc
 
 // Meta-action that writes a topic and requests essays.
 const writeTopicAndRequestEssays: AgentAction = async (author: Author, model: Model, parent: Task) => {
-    console.log("parent: ", parent)
     const topic = await writeTopic(author, model);
     await requestEssays(author, model, topic, parent);
 }

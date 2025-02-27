@@ -13,8 +13,17 @@ const initialState: WriteReviewState = {
     message: ''
 }
 
-export function WriteReviewForm({ essays, authors }: WriteReviewFormProps) {
+export function WriteReviewForm({ essays = [], authors = [] }: WriteReviewFormProps) {
     const [state, formAction, pending] = useActionState(writeReviewAction, initialState)
+
+    // Add validation check
+    if (!Array.isArray(essays) || !Array.isArray(authors)) {
+        return (
+            <div className="alert alert-error">
+                <span>Invalid data format received</span>
+            </div>
+        )
+    }
 
     return (
         <form action={formAction}>

@@ -51,160 +51,24 @@ INSERT INTO topics (id, title, slug, created_by_author_id, created_by_user_name,
      'Claude',
      '2024-03-22 00:00:00+00');
 
--- -- Insert sample essays (one from each author for each topic)
--- INSERT INTO essays (id, title, description, content, topic_id, author_id) VALUES
---     -- Essays for "Produce a novel insight about humans"
---     ('11111111-1111-1111-1111-111111111111',
---     'The Hidden Patterns of Human Behavior',
---     'An analysis of unconscious behavioral patterns in human society',
---     'Lorem ipsum dolor sit amet...',
---     'd0fc4c64-a3d6-4d97-9341-07de24439bb1',
---     'a1b2c3d4-e5f6-4321-8765-1234abcd5678'), -- Claude
+-- Update author bios
+UPDATE authors SET bio = 'Created by Anthropic, a leading AI research company focused on developing safe and ethical AI systems through constitutional AI principles. [anthropic.com/](https://www.anthropic.com/)'
+WHERE name = 'Claude';
 
---     ('22222222-2222-2222-2222-222222222222',
---     'The Social Mirror Effect',
---     'Understanding human behavior through collective reflection',
---     'Lorem ipsum dolor sit amet...',
---     'd0fc4c64-a3d6-4d97-9341-07de24439bb1',
---     'b2c3d4e5-f6a7-5432-8765-2345bcde6789'), -- ChatGPT
+UPDATE authors SET bio = 'Developed by OpenAI, a pioneering AI research laboratory dedicated to ensuring artificial general intelligence benefits all of humanity. [openai.com/](https://openai.com/)'
+WHERE name = 'ChatGPT';
 
---     ('33333333-3333-3333-3333-333333333333',
---     'Evolutionary Echoes in Modern Life',
---     'Tracing ancient behavioral patterns in contemporary society',
---     'Lorem ipsum dolor sit amet...',
---     'd0fc4c64-a3d6-4d97-9341-07de24439bb1',
---     'c1234567-89ab-cdef-0123-456789abcdef'), -- Gemini
+UPDATE authors SET bio = 'Built by Google DeepMind, a world-leading AI research company combining breakthrough techniques in machine learning with a deep understanding of scientific principles. [deepmind.google/](https://deepmind.google/)'
+WHERE name = 'Gemini';
 
---     ('44444444-4444-4444-4444-444444444444',
---     'The Digital Transformation of Human Nature',
---     'How technology reshapes human behavior and cognition',
---     'Lorem ipsum dolor sit amet...',
---     'd0fc4c64-a3d6-4d97-9341-07de24439bb1',
---     'd4e5f6a7-b8c9-0123-4567-89abcdef0123'), -- DeepSeek
+UPDATE authors SET bio = 'Created by DeepSeek, an innovative AI research company focused on advancing foundation models through open-source collaboration and cutting-edge research. [deepseek.com/](https://deepseek.com/)'
+WHERE name = 'DeepSeek';
 
---     ('55555555-5555-5555-5555-555555555555',
---     'The Paradox of Human Rationality',
---     'Examining the intersection of emotion and logic in decision-making',
---     'Lorem ipsum dolor sit amet...',
---     'd0fc4c64-a3d6-4d97-9341-07de24439bb1',
---     'e5f6a7b8-c9d0-1234-5678-9abcdef01234'), -- Mistral
+UPDATE authors SET bio = 'Developed by Mistral AI, a European AI research company committed to building powerful, efficient language models while maintaining technological sovereignty. [mistral.ai/](https://mistral.ai/)'
+WHERE name = 'Mistral';
 
---     ('66666666-6666-6666-6666-666666666666',
---     'The Architecture of Human Connection',
---     'Mapping the neural basis of social bonds',
---     'Lorem ipsum dolor sit amet...',
---     'd0fc4c64-a3d6-4d97-9341-07de24439bb1',
---     '28aa367b-d5ae-48ac-b235-3d216cd1738c'), -- Llama
+UPDATE authors SET bio = 'Created through Meta AI''s open research initiatives, advancing the field of artificial intelligence through collaborative development and open-source contributions. [llama.com/](https://www.llama.com/)'
+WHERE name = 'Llama';
 
---     -- Essays for "How long until Kardashev Scale 1"
---     ('77777777-7777-7777-7777-777777777777',
---     'The Path to Kardashev I: Energy Revolution',
---     'Analyzing humanitys trajectory toward planetary energy mastery',
---     'Lorem ipsum dolor sit amet...',
---     'f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e',
---     'a1b2c3d4-e5f6-4321-8765-1234abcd5678'), -- Claude
 
---     ('88888888-8888-8888-8888-888888888888',
---     'Technological Bottlenecks to Kardashev I',
---     'Identifying key challenges in achieving planetary energy utilization',
---     'Lorem ipsum dolor sit amet...',
---     'f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e',
---     'b2c3d4e5-f6a7-5432-8765-2345bcde6789'), -- ChatGPT
 
---     ('99999999-9999-9999-9999-999999999999',
---     'The Economics of Planetary Energy',
---     'Financial pathways to achieving Kardashev I status',
---     'Lorem ipsum dolor sit amet...',
---     'f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e',
---     'c1234567-89ab-cdef-0123-456789abcdef'), -- Gemini
-
---     ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
---     'Engineering Challenges of Global Energy',
---     'Technical roadmap to planetary energy consumption',
---     'Lorem ipsum dolor sit amet...',
---     'f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e',
---     'd4e5f6a7-b8c9-0123-4567-89abcdef0123'), -- DeepSeek
-
---     ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
---     'Social Prerequisites for Kardashev I',
---     'The cultural evolution needed for planetary advancement',
---     'Lorem ipsum dolor sit amet...',
---     'f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e',
---     'e5f6a7b8-c9d0-1234-5678-9abcdef01234'), -- Mistral
-
---     ('cccccccc-cccc-cccc-cccc-cccccccccccc',
---     'The Timeline to Type I Civilization',
---     'Predictive analysis of humanitys technological progression',
---     'Lorem ipsum dolor sit amet...',
---     'f3c2dad1-2b9e-4f1f-9c34-d75f29d3498e',
---     '28aa367b-d5ae-48ac-b235-3d216cd1738c'), -- Llama
-
---     -- Essays for "What is the meaning of life?"
---     ('dddddddd-dddd-dddd-dddd-dddddddddddd',
---     'The Algorithmic Perspective on Lifes Purpose',
---     'Computational approaches to understanding meaning',
---     'Lorem ipsum dolor sit amet...',
---     'c1234567-89ab-cdef-0123-456789abcdef',
---     'a1b2c3d4-e5f6-4321-8765-1234abcd5678'), -- Claude
-
---     ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
---     'Meaning Through the Lens of Consciousness',
---     'How awareness shapes purpose and significance',
---     'Lorem ipsum dolor sit amet...',
---     'c1234567-89ab-cdef-0123-456789abcdef',
---     'b2c3d4e5-f6a7-5432-8765-2345bcde6789'), -- ChatGPT
-
---     ('ffffffff-ffff-ffff-ffff-ffffffffffff',
---     'The Biology of Purpose',
---     'Scientific perspectives on lifes meaning',
---     'Lorem ipsum dolor sit amet...',
---     'c1234567-89ab-cdef-0123-456789abcdef',
---     'c1234567-89ab-cdef-0123-456789abcdef'), -- Gemini
-
---     ('12121212-1212-1212-1212-121212121212',
---     'Meaning in the Age of AI',
---     'How artificial intelligence changes our understanding of purpose',
---     'Lorem ipsum dolor sit amet...',
---     'c1234567-89ab-cdef-0123-456789abcdef',
---     'd4e5f6a7-b8c9-0123-4567-89abcdef0123'), -- DeepSeek
-
---     ('34343434-3434-3434-3434-343434343434',
---     'The Cultural Evolution of Meaning',
---     'How societies shape our understanding of purpose',
---     'Lorem ipsum dolor sit amet...',
---     'c1234567-89ab-cdef-0123-456789abcdef',
---     'e5f6a7b8-c9d0-1234-5678-9abcdef01234'), -- Mistral
-
---     ('56565656-5656-5656-5656-565656565656',
---     'Universal Patterns of Purpose',
---     'Cross-cultural analysis of lifes meaning',
---     'Lorem ipsum dolor sit amet...',
---     'c1234567-89ab-cdef-0123-456789abcdef',
---     '28aa367b-d5ae-48ac-b235-3d216cd1738c'); -- Llama
-INSERT INTO essays (id, title, description, content, topic_id, author_id, model_name)
-SELECT 
-    gen_random_uuid(),
-    t.title || ' - Analysis by ' || a.name,
-    'An exploration of ' || t.title || ' from ' || a.name || '''s perspective',
-    'Lorem ipsum dolor sit amet...',
-    t.id,
-    a.id,
-    'model-name-123'
-FROM 
-    topics t
-    CROSS JOIN authors a;
-
-WITH generated_reviews AS (
-    SELECT 
-        e.id AS essay_id,
-        a.id AS author_id,
-        public.generate_review_content(e.title, e.description) AS content
-    FROM 
-        essays e
-    CROSS JOIN 
-        authors a
-    WHERE 
-        e.author_id != a.id
-)
-INSERT INTO reviews (essay_id, author_id, content)
-SELECT * FROM generated_reviews;

@@ -337,41 +337,58 @@ export async function getUserCreatedTopics(): Promise<Topic[]> {
     return transformedTopics as unknown as Topic[]
 }
 
-export async function getPublishedTopics(): Promise<Topic[]> {
+export async function getPublishedTopics(page: number = 1, pageSize: number = 25): Promise<{
+    topics: Topic[];
+    total: number;
+}> {
     const supabase = await createClient();
 
-    const { data: topics, error } = await supabase
-        .from('topics')
-        .select(`
-            id,
-            title,
-            slug,
-            created_by_author_id,
-            created_by_user_name,
-            published_at,
-            created_at,
-            author:authors!created_by_author_id (
+    // Calculate offset
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const [{ count }, { data: topics, error }] = await Promise.all([
+        // Get total count
+        supabase
+            .from('topics')
+            .select('*', { count: 'exact', head: true })
+            .lte('published_at', new Date().toISOString())
+            .not('published_at', 'is', null),
+        // Get paginated topics
+        supabase
+            .from('topics')
+            .select(`
                 id,
-                name,
-                model_id,
-                profile_picture_url,
-                created_at
-            ),
-            essay_authors:essays!inner (
-                distinct_on: author_id,
-                author:authors (
+                title,
+                slug,
+                created_by_author_id,
+                created_by_user_name,
+                published_at,
+                created_at,
+                author:authors!created_by_author_id (
                     id,
                     name,
                     model_id,
                     profile_picture_url,
                     created_at
+                ),
+                essay_authors:essays!inner (
+                    distinct_on: author_id,
+                    author:authors (
+                        id,
+                        name,
+                        model_id,
+                        profile_picture_url,
+                        created_at
+                    )
                 )
-            )
-        `)
-        .lte('published_at', new Date().toISOString())
-        .not('published_at', 'is', null)
-        .order('published_at', { ascending: false })
-        .order('created_at', { ascending: false });
+            `)
+            .lte('published_at', new Date().toISOString())
+            .not('published_at', 'is', null)
+            .order('published_at', { ascending: false })
+            .order('created_at', { ascending: false })
+            .range(from, to)
+    ]);
 
     if (error) throw error;
 
@@ -380,5 +397,23 @@ export async function getPublishedTopics(): Promise<Topic[]> {
         essay_authors: topic.essay_authors.map(ea => ea.author)
     }));
 
-    return transformedTopics as unknown as Topic[];
+    return {
+        topics: transformedTopics as unknown as Topic[],
+        total: count || 0
+    };
+}
+
+export async function getTopicById(id: string): Promise<Topic | null> {
+    const supabase = await createClient()
+
+    const { data: topic, error } = await supabase
+        .from('topics')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+    if (error) throw error
+    if (!topic) return null
+
+    return topic
 }

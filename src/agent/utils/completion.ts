@@ -19,7 +19,7 @@ const providerMap: Record<string, Function> = {
     'https://api.openai.com/v1': getStructuredCompletionOpenAI,
     'https://api.anthropic.com/v1/messages': getStructuredCompletionAnthropic,
     'https://generativelanguage.googleapis.com/v1beta/openai': getStructuredCompletionOpenAI,
-    'https://api.deepseek.com': getStructuredCompletionOpenAI,
+    'https://api.deepseek.com': getStructuredCompletionDeepseek,
     'https://api.mistral.ai/v1': getStructuredCompletionOpenAI,
     'https://api.groq.com/openai/v1': getStructuredCompletionGroq,
     'default': getStructuredCompletionOpenAI
@@ -144,6 +144,54 @@ async function getStructuredCompletionOpenAI<T extends z.ZodType>(
     return {
         model: completion.model ?? model,
         completion: completion.choices[0].message.parsed
+    };
+}
+
+async function getStructuredCompletionDeepseek<T extends z.ZodType>(
+    messages: ChatCompletionMessageParam[],
+    schema: T,
+    model: string,
+    baseUrl: string,
+    apiKey: string,
+    schemaName: string
+): Promise<StructuredCompletionOutput<z.infer<T>>> {
+    const openai = new OpenAI({
+        baseURL: baseUrl,
+        apiKey,
+    });
+
+    // Generate example data from the schema
+    const exampleData = generateDummyData(schema);
+
+    // Create a system message that explains the schema
+    const systemMessage: ChatCompletionMessageParam = {
+        role: "system",
+        content: `Please provide responses in the following JSON format:
+
+EXAMPLE OUTPUT:
+${JSON.stringify(exampleData, null, 2)}
+
+Ensure the response matches this exact structure.`
+    };
+
+    // Add the system message at the start of the messages array
+    const augmentedMessages = [systemMessage, ...messages];
+
+    const completion = await openai.chat.completions.create({
+        model,
+        messages: augmentedMessages,
+        response_format: { type: 'json_object' }
+    });
+
+    // Parse the JSON response
+    const parsedResponse = JSON.parse(completion.choices[0].message.content!);
+
+    // Validate against the schema
+    const validatedResponse = schema.parse(parsedResponse);
+
+    return {
+        model: completion.model ?? model,
+        completion: validatedResponse
     };
 }
 

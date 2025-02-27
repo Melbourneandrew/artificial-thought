@@ -15,6 +15,7 @@ create table authors (
     id uuid primary key default gen_random_uuid(),
     name text not null,
     model_id uuid references models(id),
+    bio text,
     system_prompt_key text references prompts(prompt_key) not null,
     profile_picture_url text,
     created_at timestamp with time zone default now() not null
@@ -141,3 +142,83 @@ WITH RECURSIVE task_tree AS (
 SELECT * FROM task_tree
 ORDER BY level, created_at;
 $$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION get_task_tree_with_logs(root_task_id uuid)
+RETURNS TABLE (
+    id uuid,
+    prompt text,
+    author_id uuid,
+    topic_id uuid,
+    essay_id uuid,
+    review_id uuid,
+    parent_task_id uuid,
+    created_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    level int,
+    logs jsonb
+) AS $$
+WITH RECURSIVE task_tree AS (
+    -- Base case: get the root task
+    SELECT 
+        t.*,
+        0 as level
+    FROM tasks t
+    WHERE t.id = root_task_id
+
+    UNION ALL
+
+    -- Recursive case: get all child tasks
+    SELECT 
+        t.*,
+        tt.level + 1
+    FROM tasks t
+    INNER JOIN task_tree tt ON t.parent_task_id = tt.id
+)
+SELECT 
+    tt.*,
+    COALESCE(
+        jsonb_agg(
+            jsonb_build_object(
+                'id', tl.id,
+                'content', tl.content,
+                'created_at', tl.created_at
+            ) ORDER BY tl.created_at
+        ) FILTER (WHERE tl.id IS NOT NULL),
+        '[]'::jsonb
+    ) as logs
+FROM task_tree tt
+LEFT JOIN task_logs tl ON tt.id = tl.task_id
+GROUP BY tt.id, tt.prompt, tt.author_id, tt.topic_id, tt.essay_id, 
+         tt.review_id, tt.parent_task_id, tt.created_at, tt.completed_at, tt.level
+ORDER BY tt.level, tt.created_at;
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION create_random_author_topic_task()
+RETURNS uuid AS $$
+DECLARE
+    selected_author_id uuid;
+    new_task_id uuid;
+BEGIN
+    -- Select a random author
+    SELECT id INTO selected_author_id
+    FROM authors
+    ORDER BY RANDOM()
+    LIMIT 1;
+
+    -- Create a new task for the selected author
+    INSERT INTO tasks (prompt, author_id)
+    VALUES ('write_topic', selected_author_id)
+    RETURNING id INTO new_task_id;
+
+    RETURN new_task_id;
+END;
+$$ LANGUAGE plpgsql;
+
+create extension if not exists pg_cron;
+
+-- Schedule the daily task creation
+SELECT cron.schedule(
+    'create-daily-topic-task',  -- job name
+    '0 8 * * *',               -- cron schedule (8am daily)
+    $$SELECT create_random_author_topic_task()$$
+);
