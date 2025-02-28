@@ -27,7 +27,6 @@ export async function handleCreateModel(prevState: ActionState, formData: FormDa
 
 export async function handleEditModel(prevState: ActionState, formData: FormData): Promise<ActionState> {
     try {
-        console.log('🔍 Editing model')
         const id = formData.get('id') as string
         const model_url = formData.get('model_url') as string
         const author_ids = formData.getAll('author_ids').map(id => id.toString())
@@ -39,7 +38,6 @@ export async function handleEditModel(prevState: ActionState, formData: FormData
 
         // Update model URL
         await updateModelUrl(id, trimmedModelUrl)
-        console.log('🔍 Model URL updated')
 
         const supabase = await createClient()
 
@@ -51,7 +49,6 @@ export async function handleEditModel(prevState: ActionState, formData: FormData
                 .eq('model_id', id)
 
             if (unassignError) throw unassignError
-            console.log('🔍 Authors unassigned')
 
             // Then, assign the selected authors to this model
             const { error: assignError } = await supabase
@@ -60,7 +57,6 @@ export async function handleEditModel(prevState: ActionState, formData: FormData
                 .in('id', author_ids)
 
             if (assignError) throw assignError
-            console.log('🔍 Authors assigned')
         } else {
             return {
                 loading: false,

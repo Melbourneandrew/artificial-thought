@@ -26,7 +26,6 @@ export default function EditModelModal({
             <div className="modal-box overflow-visible">
                 <h3 className="font-bold text-lg">Edit Model</h3>
                 <form action={async (formData: FormData) => {
-                    console.log('FORM SUBMITTED')
                     editAction(formData)
                     if (!editState.error) {
                         window.location.reload()

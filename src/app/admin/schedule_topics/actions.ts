@@ -2,8 +2,8 @@
 
 import { createTopic } from '@/utils/repository/TopicRepo'
 import { revalidatePath } from 'next/cache'
-import { getUserCreatedTopics } from '@/utils/repository/TopicRepo'
-import { Topic } from '@/types'
+import { createClient } from '@/utils/supabase/server'
+
 export type ActionState = {
     success: boolean
     error: null | string
@@ -14,16 +14,17 @@ export async function scheduleTopic(
     formData: FormData
 ): Promise<ActionState> {
     try {
-        const publishDate = formData.get('published_at')
-        if (!publishDate) {
-            return { success: false, error: 'Publish date is required' }
+        const scheduleDate = formData.get('scheduled_for')
+        if (!scheduleDate) {
+            return { success: false, error: 'Schedule date is required' }
         }
 
         await createTopic({
             title: formData.get('title') as string,
             created_by_user_name: formData.get('created_by_user_name') as string,
             created_by_author_id: null,
-            published_at: new Date(publishDate as string).toISOString()
+            published_at: null,
+            scheduled_for: new Date(scheduleDate as string).toISOString()
         })
 
         revalidatePath('/admin/schedule_topics')
@@ -37,6 +38,32 @@ export async function scheduleTopic(
                 error: 'A topic is already scheduled for this date. Please choose a different date.'
             }
         }
+        return { success: false, error: errorMessage }
+    }
+}
+
+export async function deleteTopic(
+    state: ActionState,
+    formData: FormData
+): Promise<ActionState> {
+    try {
+        const topicId = formData.get('topicId') as string
+        if (!topicId) {
+            return { success: false, error: 'Topic ID is required' }
+        }
+
+        const supabase = await createClient()
+        const { error } = await supabase
+            .from('topics')
+            .delete()
+            .eq('id', topicId)
+
+        if (error) throw error
+
+        revalidatePath('/admin/schedule_topics')
+        return { success: true, error: null }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete topic'
         return { success: false, error: errorMessage }
     }
 }

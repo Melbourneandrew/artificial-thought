@@ -16,8 +16,7 @@ export function ScheduleTopicModal() {
 
     // Close modal and reload page when submission is successful
     if (state.success) {
-        // @ts-ignore
-        document.getElementById('schedule_topic_modal').close()
+        (document.getElementById('schedule_topic_modal') as HTMLDialogElement)?.close()
         window.location.reload()
     }
 
@@ -55,11 +54,11 @@ export function ScheduleTopicModal() {
 
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text">Publish Date</span>
+                            <span className="label-text">Schedule For</span>
                         </label>
                         <input
                             type="date"
-                            name="published_at"
+                            name="scheduled_for"
                             className="input input-bordered w-full"
                             min={formatDate(new Date())}
                             defaultValue={(() => {
@@ -83,8 +82,7 @@ export function ScheduleTopicModal() {
                         <button
                             type="button"
                             className="btn"
-                            // @ts-ignore
-                            onClick={() => document.getElementById('schedule_topic_modal').close()}
+                            onClick={() => (document.getElementById('schedule_topic_modal') as HTMLDialogElement)?.close()}
                         >
                             Cancel
                         </button>

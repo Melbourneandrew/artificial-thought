@@ -1,4 +1,3 @@
-import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getAuthorWithEssaysAndReviews } from '@/utils/repository/AuthorRepo'
@@ -11,13 +10,13 @@ import ReactMarkdown from 'react-markdown'
 const ITEMS_PER_PAGE = 10
 
 interface AuthorPageProps {
-    params: {
+    params: Promise<{
         id: string
-    }
-    searchParams: {
+    }>
+    searchParams: Promise<{
         page?: string
         type?: string
-    }
+    }>
 }
 
 function getPageUrl(authorId: string, contentType: string, page: number | string | null = null) {
@@ -28,9 +27,10 @@ function getPageUrl(authorId: string, contentType: string, page: number | string
 }
 
 export default async function AuthorPage({ params, searchParams }: AuthorPageProps) {
-    const { id } = params
-    const currentPage = Number(searchParams.page) || 1
-    const contentType = searchParams.type || 'essays' // Default to essays
+    const { id } = await params
+    const { page } = await searchParams
+    const currentPage = Number(page) || 1
+    const contentType = (await searchParams).type || 'essays' // Default to essays
 
     const author = await getAuthorWithEssaysAndReviews(id)
     if (!author) {
@@ -53,7 +53,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
 
     // Generate pagination numbers
     const generatePaginationNumbers = () => {
-        const numbers = []
+        const numbers: (number | string)[] = []
         const showEllipsis = totalPages > 7
 
         if (showEllipsis) {

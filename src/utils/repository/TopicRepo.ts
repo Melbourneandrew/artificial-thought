@@ -80,7 +80,7 @@ export async function getPreviousTopics(n: number = 5): Promise<Topic[]> {
 export async function getTopicBySlug(slug: string): Promise<TopicWithEssays | null> {
     const supabase = await createClient()
 
-    const { data: topic, error } = await supabase
+    const { data: topic } = await supabase
         .from('topics')
         .select(`
             id,
@@ -90,14 +90,14 @@ export async function getTopicBySlug(slug: string): Promise<TopicWithEssays | nu
             created_by_user_name,
             published_at,
             created_at,
-            author:authors!created_by_author_id (
+            author:authors (
                 id,
                 name,
                 model_id,
                 profile_picture_url,
                 created_at
             ),
-            essay_authors:essays!inner (
+            essay_authors:essays (
                 distinct_on: author_id,
                 author:authors (
                     id,
@@ -131,9 +131,7 @@ export async function getTopicBySlug(slug: string): Promise<TopicWithEssays | nu
         .eq('slug', slug)
         .single()
 
-    if (error) throw error
     if (!topic) return null
-
     return topic as unknown as TopicWithEssays
 }
 
@@ -159,7 +157,7 @@ export async function getRandomTopic(): Promise<TopicWithEssays | null> {
             created_by_user_name,
             published_at,
             created_at,
-            author:authors!created_by_author_id (
+            author:authors (
                 id,
                 name,
                 model_id,
@@ -218,7 +216,7 @@ async function getUniqueSlug(baseSlug: string): Promise<string> {
     let counter = 1
 
     while (true) {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('topics')
             .select('slug')
             .eq('slug', slug)
@@ -235,50 +233,19 @@ async function getUniqueSlug(baseSlug: string): Promise<string> {
     }
 }
 
-async function hasTopicOnDate(date: Date): Promise<boolean> {
-    const supabase = await createClient()
-
-    // Set time range for the entire day (from 00:00 to 23:59)
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
-
-    const { count, error } = await supabase
-        .from('topics')
-        .select('*', { count: 'exact', head: true })
-        .gte('published_at', startOfDay.toISOString())
-        .lte('published_at', endOfDay.toISOString())
-
-    if (error) throw error
-    return (count ?? 0) > 0
-}
-
 export async function createTopic(params: Omit<Topic, 'id' | 'created_at' | 'slug'>): Promise<Topic> {
     const supabase = await createClient()
 
-    if (params.published_at) {
-        const publishDate = new Date(params.published_at)
-        const hasExistingTopic = await hasTopicOnDate(publishDate)
-    }
-
     const baseSlug = slugify(params.title)
     const slug = await getUniqueSlug(baseSlug)
-
-    // Set published_at to 8am on the specified date if it exists
-    let scheduledPublishAt = params.published_at
-    if (scheduledPublishAt) {
-        const date = new Date(scheduledPublishAt)
-        date.setHours(8, 0, 0, 0)
-        scheduledPublishAt = date.toISOString()
-    }
 
     const { data: topic, error } = await supabase
         .from('topics')
         .insert({
             title: params.title,
             slug: slug,
-            published_at: scheduledPublishAt,
+            published_at: params.published_at,
+            scheduled_for: params.scheduled_for,
             created_by_author_id: params.created_by_author_id,
             created_by_user_name: params.created_by_user_name
         })
@@ -352,7 +319,6 @@ export async function getPublishedTopics(page: number = 1, pageSize: number = 25
         supabase
             .from('topics')
             .select('*', { count: 'exact', head: true })
-            .lte('published_at', new Date().toISOString())
             .not('published_at', 'is', null),
         // Get paginated topics
         supabase
@@ -365,14 +331,14 @@ export async function getPublishedTopics(page: number = 1, pageSize: number = 25
                 created_by_user_name,
                 published_at,
                 created_at,
-                author:authors!created_by_author_id (
+                author:authors (
                     id,
                     name,
                     model_id,
                     profile_picture_url,
                     created_at
                 ),
-                essay_authors:essays!inner (
+                essay_authors:essays!topic_id (
                     distinct_on: author_id,
                     author:authors (
                         id,
@@ -383,7 +349,6 @@ export async function getPublishedTopics(page: number = 1, pageSize: number = 25
                     )
                 )
             `)
-            .lte('published_at', new Date().toISOString())
             .not('published_at', 'is', null)
             .order('published_at', { ascending: false })
             .order('created_at', { ascending: false })
@@ -392,9 +357,9 @@ export async function getPublishedTopics(page: number = 1, pageSize: number = 25
 
     if (error) throw error;
 
-    const transformedTopics = topics?.map(topic => ({
+    const transformedTopics = (topics || []).map(topic => ({
         ...topic,
-        essay_authors: topic.essay_authors.map(ea => ea.author)
+        essay_authors: (topic.essay_authors || []).map(ea => ea.author)
     }));
 
     return {
@@ -416,4 +381,43 @@ export async function getTopicById(id: string): Promise<Topic | null> {
     if (!topic) return null
 
     return topic
+}
+
+export async function getScheduledTopic(date: Date = new Date()): Promise<Topic | null> {
+    const supabase = await createClient()
+
+    // Get current date in local timezone (e.g., America/New_York)
+    const today = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+        .toISOString()
+        .split('T')[0] // Gets YYYY-MM-DD in local time
+    console.log(today)
+
+    const { data: topic } = await supabase
+        .from('topics')
+        .select('*')
+        .eq('scheduled_for::date', today)
+        .is('published_at', null)
+        .single()
+
+    if (!topic) return null
+
+    return topic
+}
+
+export async function publishScheduledTopic(topic: Topic): Promise<Topic> {
+    const supabase = await createClient()
+
+    const { data: updatedTopic, error } = await supabase
+        .from('topics')
+        .update({
+            published_at: new Date().toISOString()
+        })
+        .eq('id', topic.id)
+        .select()
+        .single()
+
+    if (error) throw error
+    if (!updatedTopic) throw new Error('Failed to publish topic')
+
+    return updatedTopic
 }

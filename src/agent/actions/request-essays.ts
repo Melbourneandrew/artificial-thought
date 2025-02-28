@@ -9,7 +9,7 @@ export const requestEssays: AgentAction = async (author: Author, model: Model, t
     const authors = await getAllAuthors();
 
     for (const author of authors) {
-        const task = await createWriteEssayTask(author, topic, parent);
+        await createWriteEssayTask(author, topic, parent);
     }
 
     return "Essays requested";

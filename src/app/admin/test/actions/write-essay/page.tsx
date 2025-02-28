@@ -3,7 +3,7 @@ import { getAllAuthors } from '@/utils/repository/AuthorRepo'
 import { WriteEssayForm } from './WriteEssayForm'
 
 export default async function WriteEssayPage() {
-    const [topics, authors] = await Promise.all([
+    const [topicsData, authors] = await Promise.all([
         getPublishedTopics(),
         getAllAuthors()
     ])
@@ -11,7 +11,7 @@ export default async function WriteEssayPage() {
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-2xl font-bold mb-6">Write Essay</h1>
-            <WriteEssayForm topics={topics} authors={authors} />
+            <WriteEssayForm topics={topicsData.topics} authors={authors} />
         </div>
     )
 }

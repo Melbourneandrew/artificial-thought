@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { ScheduleTopicModal } from './ScheduleTopicModal'
-import CalendarIcon from '@/components/icons/CalendarIcon'
 import TopicCard from '@/components/cards/TopicCard'
 import { Topic } from '@/types'
 
@@ -12,8 +11,8 @@ interface TopicsListProps {
 }
 
 export function TopicsList({ initialTopics, initialError }: TopicsListProps) {
-    const [topics, setTopics] = useState<Topic[]>(initialTopics)
-    const [error, setError] = useState<string | null>(initialError)
+    const [topics] = useState<Topic[]>(initialTopics)
+    const [error] = useState<string | null>(initialError)
 
     const now = new Date()
     const futureTopics = topics
@@ -40,10 +39,11 @@ export function TopicsList({ initialTopics, initialError }: TopicsListProps) {
                 <section>
                     <h2 className="text-xl font-semibold mb-4">Future Scheduled Topics</h2>
                     <div className="flex flex-col gap-4">
-                        {futureTopics.map((topic, index) => (
+                        {futureTopics.map((topic) => (
                             <TopicCard
                                 key={topic.id}
                                 topic={topic}
+                                showDelete={true}
                             />
                         ))}
                     </div>
@@ -52,10 +52,11 @@ export function TopicsList({ initialTopics, initialError }: TopicsListProps) {
                 <section>
                     <h2 className="text-xl font-semibold mb-4">Past Scheduled Topics</h2>
                     <div className="flex flex-col gap-4">
-                        {pastTopics.map((topic, index) => (
+                        {pastTopics.map((topic) => (
                             <TopicCard
                                 key={topic.id}
                                 topic={topic}
+                                showDelete={true}
                             />
                         ))}
                     </div>

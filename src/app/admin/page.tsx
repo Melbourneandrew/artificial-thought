@@ -4,7 +4,6 @@ import ModelIcon from '@/components/icons/ModelIcon'
 import PlayIcon from '@/components/icons/PlayIcon'
 import CalendarIcon from '@/components/icons/CalendarIcon'
 import ReportIcon from '@/components/icons/ReportIcon'
-
 export default function AdminDashboard() {
     const adminLinks = [
         {

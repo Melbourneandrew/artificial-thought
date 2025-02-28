@@ -91,7 +91,6 @@ export async function deleteModelClient(id: string): Promise<void> {
 
 export async function updateModelUrl(id: string, model_url: string): Promise<Model> {
     const supabase = await createClient()
-    console.log('🔍 Updating model URL:', id, model_url)
     const { data, error } = await supabase
         .from('models')
         .update({ model_url })

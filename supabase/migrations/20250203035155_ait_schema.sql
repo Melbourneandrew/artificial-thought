@@ -28,6 +28,7 @@ create table topics (
     created_by_author_id uuid references authors(id),
     created_by_user_name text,
     published_at timestamp with time zone,
+    scheduled_for timestamp with time zone,
     created_at timestamp with time zone default now() not null
 );
 
@@ -219,6 +220,6 @@ create extension if not exists pg_cron;
 -- Schedule the daily task creation
 SELECT cron.schedule(
     'create-daily-topic-task',  -- job name
-    '0 8 * * *',               -- cron schedule (8am daily)
+    '0 13 * * *',               -- cron schedule (8am CT daily UTC-6)
     $$SELECT create_random_author_topic_task()$$
 );

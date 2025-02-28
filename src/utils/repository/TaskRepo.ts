@@ -1,9 +1,8 @@
 import { createClient } from '@/utils/supabase/server'
-import { Task, Author, Topic, Essay, Review } from '@/types'
+import { Task, Author, Topic, Essay } from '@/types'
 
 export async function createWriteEssayTask(author: Author, topic: Topic, parent: Task): Promise<Task> {
     const supabase = await createClient()
-    console.log("Parent: ", parent)
 
     const { data: task, error } = await supabase
         .from('tasks')

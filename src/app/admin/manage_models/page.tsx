@@ -1,10 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useActionState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Model, Author } from '@/types'
-import { handleCreateModel, handleEditModel, handleDeleteModel } from './actions'
 import AddModelModal from './AddModelModal'
 import EditModelModal from './EditModelModal'
 import DeleteModelModal from './DeleteModelModal'
@@ -49,7 +47,7 @@ export default function ManageModelsPage() {
 
     useEffect(() => {
         loadData()
-    }, [])
+    }, [loadData])
 
     return (
         <div className="container mx-auto p-4">

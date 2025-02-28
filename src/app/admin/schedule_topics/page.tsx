@@ -2,9 +2,11 @@ import { TopicsList } from './TopicsList'
 import { ScheduleTopicModal } from './ScheduleTopicModal'
 import { ScheduleTopicButton } from './ScheduleTopicButton'
 import { getUserCreatedTopics } from '@/utils/repository/TopicRepo'
-
+import { getScheduledTopic } from '@/utils/repository/TopicRepo'
 export default async function ScheduleTopicsPage() {
     const topics = await getUserCreatedTopics()
+    const scheduledTopic = await getScheduledTopic()
+    console.log(scheduledTopic)
 
     return (
         <div className="container mx-auto mt-4">

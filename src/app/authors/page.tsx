@@ -1,10 +1,8 @@
-import { createClient } from '@/utils/supabase/server'
 import AuthorCard from '@/components/cards/AuthorCard'
 import { getAllAuthors } from '@/utils/repository/AuthorRepo'
 
 export default async function AuthorsPage() {
     const authors = await getAllAuthors()
-    // console.log(authors)
 
     return (
         <div className="container mx-auto px-4 py-8">

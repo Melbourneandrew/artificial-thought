@@ -1,4 +1,3 @@
-import { createClient } from '@/utils/supabase/server'
 import EssayCard from '@/components/cards/EssayCard'
 import { getAllEssays } from '@/utils/repository/EssayRepo'
 import Link from 'next/link'
@@ -8,16 +7,17 @@ const ESSAYS_PER_PAGE = 25
 export default async function EssaysPage({
     searchParams,
 }: {
-    searchParams: { page?: string }
+    searchParams: Promise<{ page?: string }>
 }) {
-    const currentPage = Number(searchParams.page) || 1
+    const { page } = await searchParams
+    const currentPage = Number(page) || 1
     const { essays, total } = await getAllEssays(currentPage, ESSAYS_PER_PAGE)
 
     const totalPages = Math.ceil(total / ESSAYS_PER_PAGE)
 
     // Generate pagination numbers
     const generatePaginationNumbers = () => {
-        const numbers = []
+        const numbers: (number | string)[] = []
         const showEllipsis = totalPages > 7
 
         if (showEllipsis) {

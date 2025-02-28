@@ -1,7 +1,7 @@
 'use client'
 
 import { Model } from '@/types'
-import { useState, useRef, useEffect, forwardRef } from 'react'
+import { useState, useRef, forwardRef } from 'react'
 import { useActionState } from 'react'
 import { testProvider } from './actions'
 

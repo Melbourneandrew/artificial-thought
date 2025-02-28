@@ -13,9 +13,9 @@ export interface TaskTreeItem extends Task {
 export default async function TaskTreeView({
     searchParams,
 }: {
-    searchParams: { taskId?: string; showLogs?: string }
+    searchParams: Promise<{ taskId?: string; showLogs?: string }>
 }) {
-    const { taskId, showLogs } = searchParams
+    const { taskId, showLogs } = await searchParams
     if (!taskId) {
         return <div className="text-error">No task ID provided</div>
     }
@@ -26,7 +26,6 @@ export default async function TaskTreeView({
         .rpc('get_task_tree_with_logs', { root_task_id: taskId })
         .returns<TaskTreeItem[]>()
 
-    console.log("Tasks: ", tasks)
     if (error) {
         return <div className="text-error">Error loading task tree: {error.message}</div>
     }

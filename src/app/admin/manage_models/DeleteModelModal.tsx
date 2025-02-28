@@ -22,7 +22,7 @@ export default function DeleteModelModal({
         if (!pending && !deleteState.error && deleteState.loading === false) {
             onClose()
         }
-    }, [deleteState, pending])
+    }, [deleteState, pending, onClose])
 
     if (!selectedModel) return null
 

@@ -4,11 +4,12 @@ import { notFound } from 'next/navigation'
 export default async function TaskLogsPage({
     params,
 }: {
-    params: { taskId: string }
+    params: Promise<{ taskId: string }>
 }) {
+    const { taskId } = await params
     const [task, logs] = await Promise.all([
-        getTaskById(params.taskId),
-        getTaskLogs(params.taskId)
+        getTaskById(taskId),
+        getTaskLogs(taskId)
     ])
 
     if (!task) {

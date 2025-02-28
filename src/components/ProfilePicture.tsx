@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface ProfilePictureProps {
     src: string | null;
     size?: number;
@@ -10,8 +12,8 @@ export default function ProfilePicture({ src, size = 40, alt = "Profile picture"
             className="relative aspect-square rounded-full overflow-hidden"
             style={{ width: size }}
         >
-            <img
-                src={src || undefined}
+            <Image
+                src={src || ""}
                 alt={alt}
                 className="w-full h-full object-cover"
             />

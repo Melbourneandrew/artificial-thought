@@ -3,8 +3,6 @@
 import { useActionState } from 'react'
 import { handleCreateModel } from './actions'
 
-interface AddModelModalProps { }
-
 export default function AddModelModal() {
     const [createState, createAction, pending] = useActionState(handleCreateModel, { loading: false, error: '' })
 

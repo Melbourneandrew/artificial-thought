@@ -7,16 +7,17 @@ const TOPICS_PER_PAGE = 10
 export default async function TopicsPage({
     searchParams,
 }: {
-    searchParams: { page?: string }
+    searchParams: Promise<{ page?: string }>
 }) {
-    const currentPage = Number(searchParams.page) || 1
+    const { page } = await searchParams
+    const currentPage = Number(page) || 1
     const { topics, total } = await getPublishedTopics(currentPage, TOPICS_PER_PAGE)
 
     const totalPages = Math.ceil(total / TOPICS_PER_PAGE)
 
     // Generate pagination numbers
     const generatePaginationNumbers = () => {
-        const numbers = []
+        const numbers: (number | string)[] = []
         const showEllipsis = totalPages > 7
 
         if (showEllipsis) {

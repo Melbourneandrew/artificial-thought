@@ -7,7 +7,6 @@ interface EssayCardProps {
 }
 
 export default function EssayCard({ essay }: EssayCardProps) {
-    console.log(essay)
     return (
         <Link href={`/essays/${essay.id}`} className="block no-underline">
             <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">

@@ -4,8 +4,7 @@ export function ScheduleTopicButton() {
     return (
         <button
             className="btn btn-primary"
-            // @ts-ignore
-            onClick={() => document.getElementById('schedule_topic_modal')?.showModal()}
+            onClick={() => (document.getElementById('schedule_topic_modal') as HTMLDialogElement)?.showModal()}
         >
             Schedule New Topic
             <CalendarIcon />

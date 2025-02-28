@@ -38,7 +38,6 @@ export async function getStructuredCompletion<T extends z.ZodType>(
     baseUrl: string,
     schemaName: string = "structured_output"
 ): Promise<StructuredCompletionOutput<z.infer<T>>> {
-    console.log('🔍 Getting structured completion for:', baseUrl);
     if (process.env.TASK_TESTING_MODE === 'true') {
         const dummyData = generateDummyData(schema);
         return {
@@ -153,7 +152,6 @@ async function getStructuredCompletionDeepseek<T extends z.ZodType>(
     model: string,
     baseUrl: string,
     apiKey: string,
-    schemaName: string
 ): Promise<StructuredCompletionOutput<z.infer<T>>> {
     const openai = new OpenAI({
         baseURL: baseUrl,

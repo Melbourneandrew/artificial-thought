@@ -6,6 +6,7 @@ import { requestEssays } from "./actions/request-essays";
 import { requestReviews } from "./actions/request-reviews";
 import { completeTask, createTaskLog } from "@/utils/repository/TaskRepo";
 import { AgentAction } from "./agent_types";
+import { getScheduledTopic, publishScheduledTopic } from "@/utils/repository/TopicRepo";
 
 export async function executeTask(task: Task) {
     const { author } = task;
@@ -24,7 +25,7 @@ export async function executeTask(task: Task) {
 }
 
 export async function getAgentAction(task: Task): Promise<{ agentAction: AgentAction, params: any }> {
-    const { prompt, topic, essay, review, parent_task: parent } = task;
+    const { prompt, topic, essay } = task;
 
     /*
         This is where a function calling completion could be used to select a function.
@@ -54,7 +55,19 @@ export async function getAgentAction(task: Task): Promise<{ agentAction: AgentAc
 
 // Meta-action that writes a topic and requests essays.
 const writeTopicAndRequestEssays: AgentAction = async (author: Author, model: Model, parent: Task) => {
-    const topic = await writeTopic(author, model);
+    // Check for scheduled topics first
+    const scheduledTopic = await getScheduledTopic();
+    let topic: Topic;
+    if (scheduledTopic) {
+        // If there's a scheduled topic, use that instead of writing a new one
+        console.log("Using scheduled topic");
+        await publishScheduledTopic(scheduledTopic);
+        topic = scheduledTopic;
+    } else {
+        console.log("Writing new topic");
+        topic = await writeTopic(author, model);
+    }
+
     await requestEssays(author, model, topic, parent);
 }
 

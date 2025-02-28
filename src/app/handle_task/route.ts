@@ -10,7 +10,6 @@ export async function POST(request: Request) {
         return new Response("Task not found", { status: 404 })
     }
 
-    console.log("Handling task: ", task.prompt);
     executeTask(task);
     return new Response("OK")
 }

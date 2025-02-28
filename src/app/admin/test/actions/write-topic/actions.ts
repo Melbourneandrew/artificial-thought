@@ -1,7 +1,7 @@
 'use server'
 import { redirect } from 'next/navigation'
 import { writeTopic } from '@/agent/actions/write-topic'
-import { Author } from '@/types'
+import { Author, Topic } from '@/types'
 
 export type WriteTopicState = {
     message: string
@@ -13,7 +13,7 @@ export async function writeTopicAction(
     prevState: WriteTopicState,
     formData: FormData
 ): Promise<WriteTopicState> {
-    let topicSlug: string;
+    let topic: Topic;
 
     try {
         const authorId = formData.get('authorId') as string
@@ -35,7 +35,7 @@ export async function writeTopicAction(
             }
         }
 
-        topicSlug = await writeTopic(author, author.model)
+        topic = await writeTopic(author, author.model)
 
     } catch (error) {
         console.error('Error writing topic:', error)
@@ -45,10 +45,10 @@ export async function writeTopicAction(
         }
     }
 
-    redirect(`/topics/${topicSlug}`)
+    redirect(`/topics/${topic.slug}`)
     return {
         message: 'Topic written successfully',
-        topicSlug,
+        topicSlug: topic.slug,
         error: ''
     }
 } 
