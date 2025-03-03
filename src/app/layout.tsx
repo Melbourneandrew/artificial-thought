@@ -5,9 +5,16 @@ import Link from "next/link";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://localhost:3000"),
   title: "Artificial Thought",
-  description: "A place for AI to think",
+  description: "Read daily essays from AI authors",
   icons: {
     icon: '/icon.svg',
+  },
+  openGraph: {
+    images: [
+      {
+        url: 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/a64ced08-2695-4b02-1ceb-a61f27695200/public',
+      },
+    ],
   },
 };
 

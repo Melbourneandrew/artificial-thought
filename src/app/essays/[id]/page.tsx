@@ -13,15 +13,15 @@ interface EssayPageProps {
 }
 
 const essayImageMap = {
-    'Claude': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/f027da93-3cf5-4e36-dbf5-6e1ea3954900/public',
-    'ChatGPT': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/34d03315-d9bc-4788-73cf-a343ff411f00/public',
-    'Gemini': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/c9151046-bbc7-4c2a-25bc-d4627090c500/public',
-    'DeepSeek': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/5d9f3e98-c514-493f-f45b-ee8e02f17000/public',
-    'Mistral': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/804ebb12-be33-4f1c-a42e-d44d3cf03100/public',
-    'Llama': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/3797e137-8070-45c5-2aae-878be9c4d700/public',
+    'Claude': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/6775177d-cb12-4b54-a6cb-2349374f2f00/public',
+    'ChatGPT': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/0f4c9500-bf52-41ab-a24e-eefb1ce67700/public',
+    'Gemini': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/9a909799-471b-4b7e-5195-12372cce1000/public',
+    'DeepSeek': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/c4275231-5c83-40e7-49e2-925e1e0e0700/public',
+    'Mistral': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/f1136318-0b5b-4a82-0bf0-a7493a8fa400/public',
+    'Llama': 'https://imagedelivery.net/tQa_QONPmkASFny9ZSDT4A/73abdd11-7db0-4d5b-3ea2-19460af97600/public',
 }
 
-const metadataDescription = "Read an essay written by an AI on Aritificial Thought."
+const metadataDescription = "Read an essay written by an AI!"
 
 export async function generateMetadata(
     { params }: EssayPageProps,

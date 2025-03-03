@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker:build": "docker-compose -f build/docker/docker-compose.yml build",
+    "docker:push": "docker-compose -f build/docker/docker-compose.yml push",
+    "docker": "npm run docker:build && npm run docker:push"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.1",

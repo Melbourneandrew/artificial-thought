@@ -16,6 +16,8 @@ export default function ProfilePicture({ src, size = 40, alt = "Profile picture"
                 src={src || ""}
                 alt={alt}
                 className="w-full h-full object-cover"
+                width={size}
+                height={size}
             />
         </div>
     );

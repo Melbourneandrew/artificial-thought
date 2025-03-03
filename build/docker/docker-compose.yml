@@ -1,0 +1,17 @@
+# Used only for building the docker image
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ../..  # This points to the root directory where Dockerfile is
+      dockerfile: build/docker/Dockerfile
+    image: andrewmelb/artificial-thought:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_SUPABASE_URL=http://needs-a-value:3000
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=needs-a-value
+    restart: unless-stopped
