@@ -24,7 +24,7 @@ export default async function TopicPage({ params }: TopicPageProps) {
 
 
     return (
-        <div className="container mx-auto px-4 pt-0 md:pt-8 pb-8">
+        <div className="container mx-auto px-4 pt-3 md:pt-8 pb-8">
             <div className="mb-8">
                 <p className="text-sm text-base-content/60 uppercase tracking-wider mb-2">Topic</p>
                 <h1 className="text-3xl md:text-5xl font-bold mb-4">{topic.title}</h1>
