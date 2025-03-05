@@ -110,21 +110,41 @@ create trigger handle_task_webhook
   for each row
   execute function handle_task_webhook_fn();
 
+-- Function to delete a topic and its related records
+CREATE OR REPLACE FUNCTION delete_topic_cascade(topic_id_param uuid)
+RETURNS void AS $$
+BEGIN
+    -- Delete reviews for essays in this topic
+    DELETE FROM reviews
+    WHERE essay_id IN (
+        SELECT id FROM essays WHERE topic_id = topic_id_param
+    );
 
--- Create a function that returns a task tree
-CREATE OR REPLACE FUNCTION get_task_tree(root_task_id uuid)
-RETURNS TABLE (
-    id uuid,
-    prompt text,
-    author_id uuid,
-    topic_id uuid,
-    essay_id uuid,
-    review_id uuid,
-    parent_task_id uuid,
-    created_at timestamp with time zone,
-    completed_at timestamp with time zone,
-    level int
-) AS $$
+    -- Delete tasks related to reviews, essays, and the topic
+    DELETE FROM tasks
+    WHERE topic_id = topic_id_param
+       OR essay_id IN (SELECT id FROM essays WHERE topic_id = topic_id_param)
+       OR review_id IN (
+           SELECT r.id 
+           FROM reviews r 
+           JOIN essays e ON r.essay_id = e.id 
+           WHERE e.topic_id = topic_id_param
+       );
+
+    -- Delete task logs for deleted tasks
+    DELETE FROM task_logs
+    WHERE task_id NOT IN (SELECT id FROM tasks);
+
+    -- Delete essays in this topic
+    DELETE FROM essays
+    WHERE topic_id = topic_id_param;
+
+    -- Finally delete the topic
+    DELETE FROM topics
+    WHERE id = topic_id_param;
+END;
+$$ LANGUAGE plpgsql;
+
 WITH RECURSIVE task_tree AS (
     -- Base case: get the root task
     SELECT 
