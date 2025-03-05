@@ -96,6 +96,8 @@ returns trigger as $$
 begin
   perform net.http_post(
     url:='http://host.docker.internal:3000/handle_task'::text,
+    -- for linux deployment
+    -- url:='http://172.17.0.1:3000/handle_task'::text,
     body:=row_to_json(NEW)::jsonb
   );
   return NEW;
