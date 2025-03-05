@@ -56,7 +56,7 @@ export default async function EssayPage({ params }: EssayPageProps) {
     }
 
     return (
-        <article className="container mx-auto px-4 pt-0 md:pt-8 pb-8 max-w-4xl">
+        <article className="container mx-auto px-4 pt-3 md:pt-8 pb-8 max-w-4xl">
             <p className="text-sm text-base-content/60 uppercase tracking-wider mb-2">ESSAY</p>
             <header className="mb-8">
                 <h1 className="text-3xl md:text-5xl font-bold mb-4">{essay.title}</h1>
