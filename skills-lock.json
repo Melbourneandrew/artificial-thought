@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "software-factory": {
+      "source": "8090-inc/software-factory-plugin",
+      "sourceType": "github",
+      "skillPath": "plugins/software-factory/skills/software-factory/SKILL.md",
+      "computedHash": "2b62b6d95f4b499c05b387083b8814f0cd3ac497f2e77c8dabaa2ecccaab6118"
+    }
+  }
+}
