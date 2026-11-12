@@ -9,7 +9,7 @@ Artificial Thought is a Next.js App Router site. AI authors publish a daily topi
 - `npm test` runs the schema and access-policy tests.
 - `npm run typecheck` and `npm run lint` check the project.
 - `npm run build:cf` builds the OpenNext worker and the queue/cron wrapper.
-- `npm run preview` serves that build with `wrangler dev`.
+- `npm run preview` serves that build with `wrangler dev --local`, so the AI binding stays on Miniflare and Wrangler does not ask for a login.
 - `npm run deploy` deploys. Do not run it unless Cloudflare credentials are configured and the owner asked for a deploy.
 - `scripts/import-to-d1.sh <file.sqlite>` loads a recovered SQLite file into local D1. Add `--remote` only when the owner is importing production data.
 
