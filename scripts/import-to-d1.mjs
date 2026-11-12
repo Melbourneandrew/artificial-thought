@@ -90,7 +90,9 @@ for (const row of prompts) {
 }
 const models = rows("models")
 for (const row of models) {
-    push(insertStatement("models", row, ["id", "model_name", "model_url", "created_at"]))
+    // Upsert so the reasoning_effort column set by migrations survives the import.
+    const columns = ["id", "model_name", "model_url", "created_at"]
+    push(`INSERT INTO models (${columns.join(", ")}) VALUES (${columns.map((c) => sqlLiteral(row[c])).join(", ")}) ON CONFLICT(id) DO UPDATE SET model_name = excluded.model_name, model_url = excluded.model_url, created_at = excluded.created_at;`)
 }
 const authors = rows("authors")
 for (const row of authors) {

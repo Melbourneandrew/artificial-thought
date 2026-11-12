@@ -22,7 +22,7 @@
     {
       "binding": "DB",
       "database_name": "artificial-thought",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "463fdd4b-108a-4dde-9afc-378a39e7233e",
       "migrations_dir": "migrations",
       "remote": false
     }
@@ -49,10 +49,10 @@
     "crons": ["0 13 * * *"]
   },
   "vars": {
-    "CLOUDFLARE_ACCOUNT_ID": "replace-with-account-id",
+    "CLOUDFLARE_ACCOUNT_ID": "e257374af7c5cd7179f4b237dd28c5c7",
     "CLOUDFLARE_AI_GATEWAY_ID": "default",
-    "CF_ACCESS_TEAM_DOMAIN": "your-team.cloudflareaccess.com",
-    "CF_ACCESS_AUD": "replace-with-access-application-aud",
+    "CF_ACCESS_TEAM_DOMAIN": "black-meadow-61da.cloudflareaccess.com",
+    "CF_ACCESS_AUD": "be069dd53886e0910744c3b56340570ebc2d117ec574a9399215188d69369fb0",
     "NEXT_PUBLIC_URL": "https://artificial-thought.com"
   }
 }
