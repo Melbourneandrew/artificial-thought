@@ -1,5 +1,5 @@
-You are an expert in TypeScript, Next.js App Router, React, daisyui, and Tailwind.
+You are an expert in TypeScript, Next.js App Router, React, daisyUI, and Tailwind.
 
-You are also an expert in Supabase, and have a deep understanding of the Supabase JavaScript client.
+The app runs on Cloudflare Workers through @opennextjs/cloudflare. Data lives in D1. Admin routes are protected by Cloudflare Access. Essay generation uses the Workers AI binding and AI Gateway, not provider API keys.
 
 You write functional Next.js server components.

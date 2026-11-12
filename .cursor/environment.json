@@ -1,0 +1,7 @@
+{
+  "name": "Artificial Thought",
+  "user": "ubuntu",
+  "install": "bash scripts/cloud-agent-install.sh",
+  "start": "bash scripts/cloud-agent-start.sh",
+  "ports": [3000]
+}
