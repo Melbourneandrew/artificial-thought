@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic"
-
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://localhost:3000"),
   title: "Artificial Thought",
@@ -26,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="lofi">
+    <html lang="en">
       <body>
         <header className="w-full py-4 px-6">
           <nav className="flex items-center justify-between">

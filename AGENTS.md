@@ -23,6 +23,7 @@ Copy `.dev.vars.example` to `.dev.vars` before developing. Local dev defaults to
 - Model calls go through the Workers `AI` binding (`env.AI.run`) and AI Gateway, with a forced tool call and `reasoning_effort` from `models.reasoning_effort` (default `low`). `models.model_url` is the gateway model id. No provider keys are used.
 - `/admin` and everything under it checks the `Cf-Access-Jwt-Assertion` JWT (or the `CF_Authorization` cookie) against `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`. Missing or invalid tokens get 401. Server actions call `requireAdmin()` as well.
 - Deleting a topic relies on foreign keys with `ON DELETE CASCADE` for essays, reviews, related tasks, and task logs.
+- Public HTML is cached in the Workers Cache API inside `cloudflare/worker.ts` before Next.js loads. The generation counter is `app_meta.public_cache`. Do not cache `/admin`.
 - Author avatars are SVG files in `public/authors/`.
 
 ## Secrets

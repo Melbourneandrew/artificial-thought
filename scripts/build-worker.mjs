@@ -7,8 +7,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 await esbuild.build({
     absWorkingDir: root,
     entryPoints: ["cloudflare/worker.ts"],
-    outfile: "cloudflare/dist/worker.js",
+    outdir: "cloudflare/dist",
     bundle: true,
+    splitting: true,
     format: "esm",
     platform: "neutral",
     target: "esnext",

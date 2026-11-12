@@ -1,3 +1,4 @@
+import { bumpPublicCache } from "@/utils/bump-public-cache"
 import { all, one, run } from "@/utils/db"
 import { newId, nowIso } from "@/utils/ids"
 import { Essay } from "@/types"
@@ -90,6 +91,7 @@ export async function createEssay(essay: {
     )
     const created = await getEssayById(id)
     if (!created) throw new Error("Failed to create essay")
+    await bumpPublicCache()
     return created
 }
 

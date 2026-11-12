@@ -1,3 +1,4 @@
+import { bumpPublicCache } from "@/utils/bump-public-cache"
 import { all, one, run } from "@/utils/db"
 import { Author } from "@/types"
 import { AuthorRow, authorSelect, mapAuthor } from "@/utils/repository/rows"
@@ -129,11 +130,15 @@ export async function getAuthorWithEssaysAndReviews(id: string): Promise<Author 
 
 export async function setModelAuthors(modelId: string, authorIds: string[]): Promise<void> {
     await run(`UPDATE authors SET model_id = NULL WHERE model_id = ?`, modelId)
-    if (authorIds.length === 0) return
+    if (authorIds.length === 0) {
+        await bumpPublicCache()
+        return
+    }
     const placeholders = authorIds.map(() => "?").join(", ")
     await run(
         `UPDATE authors SET model_id = ? WHERE id IN (${placeholders})`,
         modelId,
         ...authorIds,
     )
+    await bumpPublicCache()
 }

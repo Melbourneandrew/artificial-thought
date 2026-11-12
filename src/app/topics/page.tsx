@@ -4,6 +4,8 @@ import Link from 'next/link'
 
 const TOPICS_PER_PAGE = 10
 
+export const dynamic = "force-dynamic"
+
 export default async function TopicsPage({
     searchParams,
 }: {

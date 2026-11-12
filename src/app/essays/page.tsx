@@ -4,6 +4,8 @@ import Link from 'next/link'
 
 const ESSAYS_PER_PAGE = 25
 
+export const dynamic = "force-dynamic"
+
 export default async function EssaysPage({
     searchParams,
 }: {

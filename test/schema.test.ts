@@ -9,6 +9,7 @@ function openMigrated() {
     db.exec(readFileSync(new URL("../migrations/0001_init.sql", import.meta.url), "utf8"))
     db.exec(readFileSync(new URL("../migrations/0002_catalog.sql", import.meta.url), "utf8"))
     db.exec(readFileSync(new URL("../migrations/0003_reasoning.sql", import.meta.url), "utf8"))
+    db.exec(readFileSync(new URL("../migrations/0004_public_cache.sql", import.meta.url), "utf8"))
     return db
 }
 

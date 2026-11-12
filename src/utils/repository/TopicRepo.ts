@@ -1,3 +1,4 @@
+import { bumpPublicCache } from "@/utils/bump-public-cache"
 import { all, one, run } from "@/utils/db"
 import { newId, nowIso } from "@/utils/ids"
 import { Author, Essay, Topic } from "@/types"
@@ -223,6 +224,7 @@ export async function createTopic(params: Omit<Topic, "id" | "created_at" | "slu
         topic.scheduled_for ?? null,
         topic.created_at,
     )
+    if (topic.published_at) await bumpPublicCache()
     return topic
 }
 
@@ -301,6 +303,7 @@ export async function publishScheduledTopic(topic: Topic): Promise<Topic> {
     await run(`UPDATE topics SET published_at = ? WHERE id = ?`, publishedAt, topic.id)
     const updated = await getTopicById(topic.id)
     if (!updated) throw new Error("Failed to publish topic")
+    await bumpPublicCache()
     return updated
 }
 
@@ -308,4 +311,5 @@ export async function deleteTopicById(topicId: string): Promise<void> {
     const existing = await one<{ id: string }>(`SELECT id FROM topics WHERE id = ?`, topicId)
     if (!existing) throw new Error("Topic not found")
     await run(`DELETE FROM topics WHERE id = ?`, topicId)
+    await bumpPublicCache()
 }

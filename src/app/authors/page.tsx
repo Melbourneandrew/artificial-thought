@@ -1,6 +1,8 @@
 import AuthorCard from '@/components/cards/AuthorCard'
 import { getAllAuthors } from '@/utils/repository/AuthorRepo'
 
+export const dynamic = "force-dynamic"
+
 export default async function AuthorsPage() {
     const authors = await getAllAuthors()
 

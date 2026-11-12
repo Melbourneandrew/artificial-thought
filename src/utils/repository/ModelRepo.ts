@@ -1,3 +1,4 @@
+import { bumpPublicCache } from "@/utils/bump-public-cache"
 import { all, one, run } from "@/utils/db"
 import { newId, nowIso } from "@/utils/ids"
 import { Model } from "@/types"
@@ -39,5 +40,6 @@ export async function updateModel(id: string, modelUrl: string, reasoningEffort:
         id,
     )
     if (!updated) throw new Error("Failed to update model")
+    await bumpPublicCache()
     return updated
 }

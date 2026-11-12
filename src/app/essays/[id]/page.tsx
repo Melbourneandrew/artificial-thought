@@ -47,6 +47,8 @@ export async function generateMetadata(
         },
     }
 }
+export const dynamic = "force-dynamic"
+
 export default async function EssayPage({ params }: EssayPageProps) {
     const { id } = await params;
     const essay = await getEssayWithReviews(id)

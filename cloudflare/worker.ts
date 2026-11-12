@@ -1,35 +1,47 @@
-import { createDailyTopicTask } from "../src/jobs/daily-topic"
-import { executeQueuedTask } from "../src/jobs/execute-queued-task"
-import { runWithBindings, type TaskQueueMessage } from "../src/utils/bindings"
-import { bindingsFromEnv } from "../src/utils/db"
+import type { TaskQueueMessage } from "../src/utils/bindings"
+import { isCacheablePublicGet, publicCacheKey } from "../src/utils/public-cache"
 
-declare module "../.open-next/worker.js" {
-    const openNextWorker: {
-        fetch: ExportedHandlerFetchHandler<CloudflareEnv>
+async function publicCacheVersion(env: CloudflareEnv): Promise<string> {
+    try {
+        const row = await env.DB.prepare(
+            "SELECT value FROM app_meta WHERE key = 'public_cache'",
+        ).first<{ value: string }>()
+        return row?.value || "0"
+    } catch {
+        return "0"
     }
-    export default openNextWorker
+}
+
+function withCacheHeader(response: Response, value: string, startedAt: number): Response {
+    const headers = new Headers(response.headers)
+    headers.set("x-at-cache", value)
+    headers.set("server-timing", `cache;dur=${Math.max(0, performance.now() - startedAt).toFixed(1)}`)
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
 }
 
 const worker = {
-    async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext) {
-        const openNextWorker = await import("../.open-next/worker.js")
-        return openNextWorker.default.fetch(request, env, ctx)
-    },
-
-    async scheduled(_controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext) {
-        ctx.waitUntil(runWithBindings(bindingsFromEnv(env), () => createDailyTopicTask().then(() => undefined)))
-    },
-
-    async queue(batch: MessageBatch<TaskQueueMessage>, env: CloudflareEnv) {
-        for (const message of batch.messages) {
-            try {
-                await runWithBindings(bindingsFromEnv(env), () => executeQueuedTask(message.body.taskId))
-                message.ack()
-            } catch (error) {
-                console.error("Task execution failed", message.body?.taskId, error)
-                message.retry()
-            }
+    async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext): Promise<Response> {
+        const startedAt = performance.now()
+        if (isCacheablePublicGet(request)) {
+            const version = await publicCacheVersion(env)
+            const cacheKey = publicCacheKey(request, version)
+            const hit = await caches.default.match(cacheKey)
+            if (hit) return withCacheHeader(hit, "hit", startedAt)
+            const { handleFetch } = await import("./handlers")
+            return handleFetch(request, env, ctx, cacheKey)
         }
+        const { handleFetch } = await import("./handlers")
+        return handleFetch(request, env, ctx, null)
+    },
+
+    async scheduled(_controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
+        const { handleScheduled } = await import("./handlers")
+        await handleScheduled(env, ctx)
+    },
+
+    async queue(batch: MessageBatch<TaskQueueMessage>, env: CloudflareEnv): Promise<void> {
+        const { handleQueue } = await import("./handlers")
+        await handleQueue(batch, env)
     },
 }
 

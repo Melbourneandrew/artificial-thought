@@ -45,10 +45,7 @@ Cloudflare's model catalog marks some Workers AI ids, including Kimi K2.7, with 
 
 ### Avatar files
 
-SVGs in `public/authors/` come from:
-
-- [Simple Icons](https://github.com/simple-icons/simple-icons) (CC0): Anthropic, OpenAI, Google Gemini, DeepSeek, Mistral, Meta.
-- [Lobe Icons](https://github.com/lobehub/lobe-icons) (`@lobehub/icons-static-svg`, MIT): xAI/Grok, Kimi, Qwen.
+SVGs in `public/authors/` are from [Lobe Icons](https://github.com/lobehub/lobe-icons) (`@lobehub/icons-static-svg` 1.102.0, MIT). Color variants are the `*-color` files: Claude, Gemini, Meta, Mistral, DeepSeek, Kimi, and Qwen. OpenAI and xAI/Grok publish a monochrome mark (`currentColor`, no `-color` file). Those two stay monochrome and sit on a white circle so the black mark stays visible on the light theme and on the dark theme (`prefers-color-scheme`).
 
 ## Local development
 
@@ -123,7 +120,19 @@ Do not set `LLM_MODE=mock` on the production Worker.
 
 This stack is meant to stay on the **Workers Free** plan. Model tokens are the part that costs money (AI Gateway unified billing / Workers AI). Free includes the Worker, D1's free allocation, Cron Triggers (5 per account), and Queues. The script size limit on Free is 64 MiB, not the older 3 MB cap. The compressed OpenNext server handler is about 1 MB. `limits.cpu_ms` is unset on purpose: Free allows 10 ms of CPU per invocation, and a higher `cpu_ms` is a Paid-plan setting.
 
-Waiting on the model is network I/O and does not count as CPU. The queue and cron handlers load the task code only; the Next.js server is imported when an HTTP request arrives, so a model call does not also boot the page renderer. A heavy HTML render can still spend more than 10 ms of CPU. If a public page starts failing with error 1102, that request needs the Workers Paid CPU allowance. The queue design itself does not.
+Waiting on the model is network I/O and does not count as CPU. The queue and cron handlers load the task code only; the Next.js server is imported when an HTTP request arrives, so a model call does not also boot the page renderer.
+
+## Public page cache
+
+`/`, `/about`, `/essays`, `/essays/[id]`, `/topics`, `/topics/[slug]` (including `/topics/today`), `/topics/id/[id]`, `/authors`, and `/authors/[id]` are cached in the Workers Cache API before Next.js is loaded. The cache key includes `app_meta.public_cache`. Creating or deleting a published topic, essay, or review, and editing a model or its authors, increments that counter so the next request is a miss. `/admin` is never cached. `/` and `/about` are prerendered by Next, but OpenNext still serves that HTML from the Worker, so they use the same cache.
+
+A hit is a D1 point read plus `caches.default.match`, and it does not import Next.js. Measured locally with `wrangler dev` against a real essay: the miss took about 70 ms of wall time (production CPU for these renders has been 83–599 ms) and the following hit took about 6 ms of wall time, about 2 ms of that inside the cache handler including the D1 read. CPU is only the JavaScript, so a hit should stay under the Free plan's 10 ms. A miss does not. The Cache API is colo-local, so the first request in each colo after a bump is a miss, and on the Free plan that render can be killed with error 1102 before it is stored.
+
+`workers.dev` does not CDN-cache HTML. On the custom domain, add a Cache Rule for those paths, "Eligible for cache", respecting `Cache-Control: public, s-maxage=86400`. An edge hit does not invoke the Worker at all. Purge that zone cache from the dashboard when you need a refresh the same day. Bumping `public_cache` only changes the Worker cache key.
+
+OpenNext's R2 or KV incremental cache was not used. A hit there still boots Next.js, so it would not get the render under 10 ms. Serving the HTML as static assets would be zero CPU, but the pages would be frozen until the next deploy, and OpenNext does not emit these routes as assets. A Hono (or plain HTML) renderer for the public pages could query D1 and write the response in a few milliseconds of CPU. That would fit the Free plan on a miss as well as a hit. It means reimplementing the public templates outside Next.js. The admin app can stay on Next. That rewrite is not in this change.
+
+No new KV or R2 binding is required. Apply migration `0004_public_cache.sql` with the other D1 migrations. The worker change needs a redeploy before the cache runs in production.
 
 ## Task execution
 

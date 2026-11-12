@@ -1,3 +1,4 @@
+import { bumpPublicCache } from "@/utils/bump-public-cache"
 import { one, run } from "@/utils/db"
 import { newId, nowIso } from "@/utils/ids"
 import { Review } from "@/types"
@@ -35,6 +36,7 @@ export async function createReview(review: {
     )
     const created = await getReviewById(id)
     if (!created) throw new Error("Failed to create review")
+    await bumpPublicCache()
     return created
 }
 

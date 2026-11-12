@@ -26,6 +26,8 @@ function getPageUrl(authorId: string, contentType: string, page: number | string
     return `${base}${type}${pageParam}`
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function AuthorPage({ params, searchParams }: AuthorPageProps) {
     const { id } = await params
     const { page } = await searchParams
