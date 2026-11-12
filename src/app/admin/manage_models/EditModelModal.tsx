@@ -39,36 +39,36 @@ export default function EditModelModal({
                     )}
                     <input type="hidden" name="id" value={selectedModel.id} />
 
-                    <div className="form-control">
+                    <div className="flex flex-col gap-1">
                         <label className="label">
-                            <span className="label-text">Model Name</span>
+                            <span className="text-sm">Model Name</span>
                         </label>
                         <input
                             type="text"
                             name="model_name"
                             defaultValue={selectedModel.model_name}
-                            className="input input-bordered"
+                            className="input"
                             required
                             disabled
                         />
                     </div>
 
-                    <div className="form-control">
+                    <div className="flex flex-col gap-1">
                         <label className="label">
-                            <span className="label-text">Model URL</span>
+                            <span className="text-sm">Cloudflare model id</span>
                         </label>
                         <input
                             type="text"
                             name="model_url"
                             defaultValue={selectedModel.model_url}
-                            className="input input-bordered"
+                            className="input"
                             required
                         />
                     </div>
 
-                    <div className="form-control mt-4">
+                    <div className="flex flex-col gap-1 mt-4">
                         <label className="label">
-                            <span className="label-text">Assign Authors</span>
+                            <span className="text-sm">Assign Authors</span>
                         </label>
                         <div className="bg-base-200 rounded-lg p-2 max-h-[12rem] overflow-y-auto">
                             {authors.map(author => (

@@ -19,14 +19,14 @@ export function WriteEssayForm({ topics, authors }: WriteEssayFormProps) {
         <form action={formAction}>
             <div className="space-y-6">
                 {/* Author Selection */}
-                <div className="form-control w-full">
+                <div className="flex flex-col gap-1 w-full">
                     <label className="label" htmlFor="authorId">
-                        <span className="label-text">Select Author</span>
+                        <span className="text-sm">Select Author</span>
                     </label>
                     <select
                         id="authorId"
                         name="authorId"
-                        className="select select-bordered w-full"
+                        className="select w-full"
                         required
                         onChange={(e) => {
                             // When author is selected, store the full author data
@@ -50,14 +50,14 @@ export function WriteEssayForm({ topics, authors }: WriteEssayFormProps) {
                 </div>
 
                 {/* Topic Selection */}
-                <div className="form-control w-full">
+                <div className="flex flex-col gap-1 w-full">
                     <label className="label" htmlFor="topicId">
-                        <span className="label-text">Select Topic</span>
+                        <span className="text-sm">Select Topic</span>
                     </label>
                     <select
                         id="topicId"
                         name="topicId"
-                        className="select select-bordered w-full"
+                        className="select w-full"
                         required
                         onChange={(e) => {
                             // When topic is selected, store the full topic data

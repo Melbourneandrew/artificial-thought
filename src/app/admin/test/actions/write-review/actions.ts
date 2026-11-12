@@ -1,4 +1,6 @@
 'use server'
+
+import { requireAdmin } from '@/utils/require-admin'
 import { redirect } from 'next/navigation'
 import { writeReview } from '@/agent/actions/write-review'
 import { Author, Essay } from '@/types'
@@ -13,6 +15,7 @@ export async function writeReviewAction(
     prevState: WriteReviewState,
     formData: FormData
 ): Promise<WriteReviewState> {
+    await requireAdmin()
     let reviewId: string;
     let essay: Essay;
 

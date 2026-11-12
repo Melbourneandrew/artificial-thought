@@ -1,423 +1,311 @@
-import { createClient } from '@/utils/supabase/server'
-import { Topic, Essay, Author } from '@/types'
+import { all, one, run } from "@/utils/db"
+import { newId, nowIso } from "@/utils/ids"
+import { Author, Essay, Topic } from "@/types"
+import { AuthorRow, authorSelect, mapAuthor } from "@/utils/repository/rows"
 
-interface TopicWithEssays extends Topic {
-    essays: (Essay & {
-        author: Author
-    })[]
+export interface TopicWithEssays extends Topic {
+    essays: (Essay & { author: Author })[]
 }
 
-export async function getMostRecentTopic(): Promise<TopicWithEssays | null> {
-    const supabase = await createClient()
-
-    const { data: topic, error } = await supabase
-        .from('topics')
-        .select(`
-            id,
-            title,
-            slug,
-            created_by_author_id,
-            created_by_user_name,
-            published_at,
-            created_at,
-            author:authors!created_by_author_id (
-                id,
-                name,
-                model_id,
-                profile_picture_url,
-                created_at
-            ),
-            essay_authors:essays!inner (
-                distinct_on: author_id,
-                author:authors (
-                    id,
-                    name,
-                    model_id,
-                    profile_picture_url,
-                    created_at
-                )
-            ),
-            essays (
-                id,
-                title,
-                description,
-                created_at,
-                author:authors (
-                    id,
-                    name,
-                    model_id,
-                    profile_picture_url,
-                    created_at
-                )
-            )
-        `)
-        .order('published_at', { ascending: false })
-        .not('published_at', 'is', null)
-        .limit(1)
-        .single()
-
-    if (error) throw error
-    if (!topic) return null
-
-    return topic as unknown as TopicWithEssays
+type TopicRow = {
+    id: string
+    title: string
+    slug: string
+    created_by_author_id: string | null
+    created_by_user_name: string | null
+    published_at: string | null
+    scheduled_for: string | null
+    created_at: string
 }
 
-export async function getPreviousTopics(n: number = 5): Promise<Topic[]> {
-    const supabase = await createClient()
-
-    const { data: topics, error } = await supabase
-        .from('topics')
-        .select('*')
-        .order('published_at', { ascending: false })
-        .limit(n)
-
-    if (error) throw error
-    if (!topics) return []
-
-    return topics as Topic[]
-}
-
-export async function getTopicBySlug(slug: string): Promise<TopicWithEssays | null> {
-    const supabase = await createClient()
-
-    const { data: topic } = await supabase
-        .from('topics')
-        .select(`
-            id,
-            title,
-            slug,
-            created_by_author_id,
-            created_by_user_name,
-            published_at,
-            created_at,
-            author:authors (
-                id,
-                name,
-                model_id,
-                profile_picture_url,
-                created_at
-            ),
-            essay_authors:essays (
-                distinct_on: author_id,
-                author:authors (
-                    id,
-                    name,
-                    model_id,
-                    profile_picture_url,
-                    created_at
-                )
-            ),
-            essays (
-                id,
-                title,
-                description,
-                created_at,
-                author:authors (
-                    id,
-                    name,
-                    model_id,
-                    profile_picture_url,
-                    created_at
-                ),
-                topic:topics (
-                    id,
-                    title,
-                    slug,
-                    published_at,
-                    created_at
-                )
-            )
-        `)
-        .eq('slug', slug)
-        .single()
-
-    if (!topic) return null
-    return topic as unknown as TopicWithEssays
-}
-
-export async function getRandomTopic(): Promise<TopicWithEssays | null> {
-    const supabase = await createClient()
-
-    const { count } = await supabase
-        .from('topics')
-        .select('*', { count: 'exact', head: true })
-        .not('published_at', 'is', null)
-
-    if (!count) return null
-
-    const randomOffset = Math.floor(Math.random() * count)
-
-    const { data: topic, error } = await supabase
-        .from('topics')
-        .select(`
-            id,
-            title,
-            slug,
-            created_by_author_id,
-            created_by_user_name,
-            published_at,
-            created_at,
-            author:authors (
-                id,
-                name,
-                model_id,
-                profile_picture_url,
-                created_at
-            ),
-            essay_authors:essays!inner (
-                distinct_on: author_id,
-                author:authors (
-                    id,
-                    name,
-                    model_id,
-                    profile_picture_url,
-                    created_at
-                )
-            ),
-            essays (
-                id,
-                title,
-                description,
-                created_at,
-                author:authors (
-                    id,
-                    name,
-                    model_id,
-                    profile_picture_url,
-                    created_at
-                )
-            )
-        `)
-        .not('published_at', 'is', null)
-        .limit(1)
-        .range(randomOffset, randomOffset)
-        .single()
-
-    if (error) throw error
-    if (!topic) return null
-
-    return topic as unknown as TopicWithEssays
-}
-
-function slugify(text: string): string {
-    return text
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w\s-]/g, '') // Remove all non-word chars (except spaces and dashes)
-        .replace(/\s+/g, '-')     // Replace spaces with dashes
-        .replace(/-+/g, '-')      // Replace multiple dashes with single dash
-        .replace(/^-+/, '')       // Trim dashes from start
-        .replace(/-+$/, '');      // Trim dashes from end
-}
-
-async function getUniqueSlug(baseSlug: string): Promise<string> {
-    const supabase = await createClient()
-    let slug = baseSlug
-    let counter = 1
-
-    while (true) {
-        const { error } = await supabase
-            .from('topics')
-            .select('slug')
-            .eq('slug', slug)
-            .single()
-
-        if (error?.code === 'PGRST116') {  // PGRST116 means no rows returned
-            return slug
-        }
-        if (error) throw error
-
-        // If we get here, the slug exists, so try the next number
-        slug = `${baseSlug}-${counter}`
-        counter++
+function baseTopic(row: TopicRow): Topic {
+    return {
+        id: row.id,
+        title: row.title,
+        slug: row.slug,
+        created_by_author_id: row.created_by_author_id,
+        created_by_user_name: row.created_by_user_name,
+        published_at: row.published_at,
+        scheduled_for: row.scheduled_for,
+        created_at: row.created_at,
     }
 }
 
-export async function createTopic(params: Omit<Topic, 'id' | 'created_at' | 'slug'>): Promise<Topic> {
-    const supabase = await createClient()
+async function authorForTopic(authorId: string | null): Promise<Author | undefined> {
+    if (!authorId) return undefined
+    const row = await one<AuthorRow>(
+        `SELECT ${authorSelect}
+         FROM authors a
+         LEFT JOIN models m ON m.id = a.model_id
+         LEFT JOIN prompts p ON p.prompt_key = a.system_prompt_key
+         WHERE a.id = ?`,
+        authorId,
+    )
+    return row ? mapAuthor(row) : undefined
+}
 
-    const baseSlug = slugify(params.title)
-    const slug = await getUniqueSlug(baseSlug)
+async function essaysForTopic(topic: Topic): Promise<Essay[]> {
+    const rows = await all<{
+        id: string
+        title: string
+        description: string
+        created_at: string
+        model_name: string
+        author_id: string
+        author_name: string
+        author_model_id: string | null
+        author_profile_picture_url: string | null
+        author_created_at: string
+    }>(
+        `SELECT e.id, e.title, e.description, e.created_at, e.model_name, e.author_id,
+                a.name AS author_name, a.model_id AS author_model_id,
+                a.profile_picture_url AS author_profile_picture_url, a.created_at AS author_created_at
+         FROM essays e
+         JOIN authors a ON a.id = e.author_id
+         WHERE e.topic_id = ?
+         ORDER BY e.created_at ASC`,
+        topic.id,
+    )
+    return rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        content: "",
+        topic_id: topic.id,
+        author_id: row.author_id,
+        model_name: row.model_name,
+        created_at: row.created_at,
+        topic,
+        author: {
+            id: row.author_id,
+            name: row.author_name,
+            model_id: row.author_model_id || "",
+            system_prompt_key: "",
+            profile_picture_url: row.author_profile_picture_url,
+            created_at: row.author_created_at,
+        },
+    }))
+}
 
-    const { data: topic, error } = await supabase
-        .from('topics')
-        .insert({
-            title: params.title,
-            slug: slug,
-            published_at: params.published_at,
-            scheduled_for: params.scheduled_for,
-            created_by_author_id: params.created_by_author_id,
-            created_by_user_name: params.created_by_user_name
+async function essayAuthorsForTopics(topicIds: string[]): Promise<Map<string, Author[]>> {
+    const grouped = new Map<string, Author[]>()
+    if (topicIds.length === 0) return grouped
+    const placeholders = topicIds.map(() => "?").join(", ")
+    const rows = await all<{
+        topic_id: string
+        id: string
+        name: string
+        model_id: string | null
+        profile_picture_url: string | null
+        created_at: string
+    }>(
+        `SELECT DISTINCT e.topic_id, a.id, a.name, a.model_id, a.profile_picture_url, a.created_at
+         FROM essays e
+         JOIN authors a ON a.id = e.author_id
+         WHERE e.topic_id IN (${placeholders})
+         ORDER BY a.name`,
+        ...topicIds,
+    )
+    for (const row of rows) {
+        const list = grouped.get(row.topic_id) ?? []
+        list.push({
+            id: row.id,
+            name: row.name,
+            model_id: row.model_id || "",
+            system_prompt_key: "",
+            profile_picture_url: row.profile_picture_url,
+            created_at: row.created_at,
         })
-        .select(`
-            id,
-            title,
-            slug,
-            published_at,
-            created_at,
-            created_by_author_id,
-            created_by_user_name
-        `)
-        .single()
+        grouped.set(row.topic_id, list)
+    }
+    return grouped
+}
 
-    if (error) throw error
-    if (!topic) throw new Error('Failed to create topic')
+async function hydrateTopic(row: TopicRow, requireEssays: boolean): Promise<TopicWithEssays | null> {
+    const essays = await essaysForTopic(baseTopic(row))
+    if (requireEssays && essays.length === 0) return null
+    const authors = await essayAuthorsForTopics([row.id])
+    return {
+        ...baseTopic(row),
+        author: await authorForTopic(row.created_by_author_id),
+        essay_authors: authors.get(row.id) ?? [],
+        essays,
+    }
+}
 
+export async function getMostRecentTopic(): Promise<TopicWithEssays | null> {
+    const row = await one<TopicRow>(
+        `SELECT * FROM topics
+         WHERE published_at IS NOT NULL
+           AND EXISTS (SELECT 1 FROM essays e WHERE e.topic_id = topics.id)
+         ORDER BY published_at DESC
+         LIMIT 1`,
+    )
+    return row ? hydrateTopic(row, true) : null
+}
+
+export async function getPreviousTopics(n: number = 5): Promise<Topic[]> {
+    const rows = await all<TopicRow>(
+        `SELECT * FROM topics ORDER BY published_at DESC LIMIT ?`,
+        n,
+    )
+    return rows.map(baseTopic)
+}
+
+export async function getTopicBySlug(slug: string): Promise<TopicWithEssays | null> {
+    const row = await one<TopicRow>(`SELECT * FROM topics WHERE slug = ?`, slug)
+    return row ? hydrateTopic(row, false) : null
+}
+
+export async function getRandomTopic(): Promise<TopicWithEssays | null> {
+    const row = await one<TopicRow>(
+        `SELECT * FROM topics
+         WHERE published_at IS NOT NULL
+           AND EXISTS (SELECT 1 FROM essays e WHERE e.topic_id = topics.id)
+         ORDER BY RANDOM()
+         LIMIT 1`,
+    )
+    return row ? hydrateTopic(row, true) : null
+}
+
+export function slugify(text: string): string {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-+/, "")
+        .replace(/-+$/, "")
+}
+
+async function getUniqueSlug(baseSlug: string): Promise<string> {
+    let slug = baseSlug || "topic"
+    let counter = 1
+    while (counter < 1000) {
+        const existing = await one<{ slug: string }>(`SELECT slug FROM topics WHERE slug = ?`, slug)
+        if (!existing) return slug
+        slug = `${baseSlug}-${counter}`
+        counter++
+    }
+    throw new Error("Unable to allocate a unique topic slug")
+}
+
+export async function createTopic(params: Omit<Topic, "id" | "created_at" | "slug">): Promise<Topic> {
+    if (params.scheduled_for) {
+        const existing = await one<{ id: string }>(
+            `SELECT id FROM topics
+             WHERE published_at IS NULL AND scheduled_for IS NOT NULL AND date(scheduled_for) = date(?)`,
+            params.scheduled_for,
+        )
+        if (existing) throw new Error("A topic is already scheduled for this date")
+    }
+
+    const topic: Topic = {
+        id: newId(),
+        title: params.title,
+        slug: await getUniqueSlug(slugify(params.title)),
+        created_by_author_id: params.created_by_author_id ?? null,
+        created_by_user_name: params.created_by_user_name ?? null,
+        published_at: params.published_at ?? null,
+        scheduled_for: params.scheduled_for ?? null,
+        created_at: nowIso(),
+    }
+    await run(
+        `INSERT INTO topics (id, title, slug, created_by_author_id, created_by_user_name, published_at, scheduled_for, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        topic.id,
+        topic.title,
+        topic.slug,
+        topic.created_by_author_id ?? null,
+        topic.created_by_user_name ?? null,
+        topic.published_at ?? null,
+        topic.scheduled_for ?? null,
+        topic.created_at,
+    )
     return topic
 }
 
 export async function getUserCreatedTopics(): Promise<Topic[]> {
-    const supabase = await createClient()
-
-    const { data: topics, error } = await supabase
-        .from('topics')
-        .select(`
-            id,
-            title,
-            slug,
-            created_by_author_id,
-            created_by_user_name,
-            published_at,
-            created_at,
-            essay_authors:essays (
-                distinct_on: author_id,
-                author:authors (
-                    id,
-                    name,
-                    model_id,
-                    profile_picture_url,
-                    created_at
-                )
-            )
-        `)
-        .is('created_by_author_id', null)
-        .order('created_at', { ascending: false })
-
-    if (error) throw error
-    if (!topics) return []
-
-    const transformedTopics = topics.map(topic => ({
-        ...topic,
-        essay_authors: (topic.essay_authors || []).map(ea => ea.author)
-    }));
-
-    return transformedTopics as unknown as Topic[]
+    const rows = await all<TopicRow>(
+        `SELECT * FROM topics WHERE created_by_author_id IS NULL ORDER BY created_at DESC`,
+    )
+    const authors = await essayAuthorsForTopics(rows.map((row) => row.id))
+    return rows.map((row) => ({
+        ...baseTopic(row),
+        essay_authors: authors.get(row.id) ?? [],
+    }))
 }
 
 export async function getPublishedTopics(page: number = 1, pageSize: number = 25): Promise<{
-    topics: Topic[];
-    total: number;
+    topics: Topic[]
+    total: number
 }> {
-    const supabase = await createClient();
-
-    // Calculate offset
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
-
-    const [{ count }, { data: topics, error }] = await Promise.all([
-        // Get total count
-        supabase
-            .from('topics')
-            .select('*', { count: 'exact', head: true })
-            .not('published_at', 'is', null),
-        // Get paginated topics
-        supabase
-            .from('topics')
-            .select(`
-                id,
-                title,
-                slug,
-                created_by_author_id,
-                created_by_user_name,
-                published_at,
-                created_at,
-                author:authors (
-                    id,
-                    name,
-                    model_id,
-                    profile_picture_url,
-                    created_at
-                ),
-                essay_authors:essays!topic_id (
-                    distinct_on: author_id,
-                    author:authors (
-                        id,
-                        name,
-                        model_id,
-                        profile_picture_url,
-                        created_at
-                    )
-                )
-            `)
-            .not('published_at', 'is', null)
-            .order('published_at', { ascending: false })
-            .order('created_at', { ascending: false })
-            .range(from, to)
-    ]);
-
-    if (error) throw error;
-
-    const transformedTopics = (topics || []).map(topic => ({
-        ...topic,
-        essay_authors: (topic.essay_authors || []).map(ea => ea.author)
-    }));
-
+    const offset = (page - 1) * pageSize
+    const totalRow = await one<{ total: number }>(
+        `SELECT COUNT(*) AS total FROM topics WHERE published_at IS NOT NULL`,
+    )
+    const rows = await all<TopicRow>(
+        `SELECT * FROM topics
+         WHERE published_at IS NOT NULL
+         ORDER BY published_at DESC, created_at DESC
+         LIMIT ? OFFSET ?`,
+        pageSize,
+        offset,
+    )
+    const creatorIds = rows.map((row) => row.created_by_author_id).filter((id): id is string => Boolean(id))
+    const creators = new Map<string, Author>()
+    if (creatorIds.length > 0) {
+        const placeholders = creatorIds.map(() => "?").join(", ")
+        const creatorRows = await all<AuthorRow>(
+            `SELECT ${authorSelect}
+             FROM authors a
+             LEFT JOIN models m ON m.id = a.model_id
+             LEFT JOIN prompts p ON p.prompt_key = a.system_prompt_key
+             WHERE a.id IN (${placeholders})`,
+            ...creatorIds,
+        )
+        for (const row of creatorRows) creators.set(row.id, mapAuthor(row))
+    }
+    const essayAuthors = await essayAuthorsForTopics(rows.map((row) => row.id))
     return {
-        topics: transformedTopics as unknown as Topic[],
-        total: count || 0
-    };
+        topics: rows.map((row) => ({
+            ...baseTopic(row),
+            author: row.created_by_author_id ? creators.get(row.created_by_author_id) : undefined,
+            essay_authors: essayAuthors.get(row.id) ?? [],
+        })),
+        total: totalRow?.total || 0,
+    }
 }
 
 export async function getTopicById(id: string): Promise<Topic | null> {
-    const supabase = await createClient()
-
-    const { data: topic, error } = await supabase
-        .from('topics')
-        .select('*')
-        .eq('id', id)
-        .single()
-
-    if (error) throw error
-    if (!topic) return null
-
-    return topic
+    const row = await one<TopicRow>(`SELECT * FROM topics WHERE id = ?`, id)
+    return row ? baseTopic(row) : null
 }
 
 export async function getScheduledTopic(date: Date = new Date()): Promise<Topic | null> {
-    const supabase = await createClient()
-
-    // Get current date in local timezone (e.g., America/New_York)
     const today = new Date(date.getFullYear(), date.getMonth(), date.getDate())
         .toISOString()
-        .split('T')[0] // Gets YYYY-MM-DD in local time
-    console.log(today)
-
-    const { data: topic } = await supabase
-        .from('topics')
-        .select('*')
-        .eq('scheduled_for::date', today)
-        .is('published_at', null)
-        .single()
-
-    if (!topic) return null
-
-    return topic
+        .split("T")[0]
+    const row = await one<TopicRow>(
+        `SELECT * FROM topics
+         WHERE published_at IS NULL AND scheduled_for IS NOT NULL AND date(scheduled_for) = ?
+         LIMIT 1`,
+        today,
+    )
+    return row ? baseTopic(row) : null
 }
 
 export async function publishScheduledTopic(topic: Topic): Promise<Topic> {
-    const supabase = await createClient()
+    const publishedAt = nowIso()
+    await run(`UPDATE topics SET published_at = ? WHERE id = ?`, publishedAt, topic.id)
+    const updated = await getTopicById(topic.id)
+    if (!updated) throw new Error("Failed to publish topic")
+    return updated
+}
 
-    const { data: updatedTopic, error } = await supabase
-        .from('topics')
-        .update({
-            published_at: new Date().toISOString()
-        })
-        .eq('id', topic.id)
-        .select()
-        .single()
-
-    if (error) throw error
-    if (!updatedTopic) throw new Error('Failed to publish topic')
-
-    return updatedTopic
+export async function deleteTopicById(topicId: string): Promise<void> {
+    const existing = await one<{ id: string }>(`SELECT id FROM topics WHERE id = ?`, topicId)
+    if (!existing) throw new Error("Topic not found")
+    await run(`DELETE FROM topics WHERE id = ?`, topicId)
 }

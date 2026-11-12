@@ -1,8 +1,7 @@
 import { Author, Essay, Model, Topic } from "@/types";
 import { AgentAction } from "@/agent/agent_types";
-import { getStructuredCompletion } from "@/agent/utils/completion";
+import { ChatMessage, getStructuredCompletion } from "@/agent/utils/completion";
 import { z } from "zod";
-import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { createEssay } from "@/utils/repository/EssayRepo";
 import { getWriteEssayUserPrompt } from "@/agent/utils/prompts";
 
@@ -15,7 +14,7 @@ const essaySchema = z.object({
 export const writeEssay: AgentAction = async (author: Author, model: Model, topic: Topic): Promise<Essay> => {
     const userPrompt = await getWriteEssayUserPrompt(topic);
 
-    const messages: ChatCompletionMessageParam[] = [
+    const messages: ChatMessage[] = [
         {
             role: "system",
             content: author.system_prompt?.prompt || ""
@@ -29,7 +28,6 @@ export const writeEssay: AgentAction = async (author: Author, model: Model, topi
     const { completion: essayContent, model: essayModel } = await getStructuredCompletion(
         messages,
         essaySchema,
-        model.model_name,
         model.model_url
     );
 

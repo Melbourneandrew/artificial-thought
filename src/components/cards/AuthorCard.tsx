@@ -9,7 +9,7 @@ interface AuthorCardProps {
 }
 
 export default function AuthorCard({ author, bio, withLink = true }: AuthorCardProps) {
-    const CardContent = () => (
+    const card = (
         <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div className="card-body">
                 <div className="flex items-center gap-4">
@@ -33,10 +33,10 @@ export default function AuthorCard({ author, bio, withLink = true }: AuthorCardP
     if (withLink) {
         return (
             <Link href={`/authors/${author.id}`} className="hover:shadow-2xl transition-shadow no-underline">
-                <CardContent />
+                {card}
             </Link>
         );
     }
 
-    return <CardContent />;
+    return card;
 }

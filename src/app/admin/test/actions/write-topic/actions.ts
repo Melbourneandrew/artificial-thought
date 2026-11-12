@@ -1,4 +1,6 @@
 'use server'
+
+import { requireAdmin } from '@/utils/require-admin'
 import { redirect } from 'next/navigation'
 import { writeTopic } from '@/agent/actions/write-topic'
 import { Author, Topic } from '@/types'
@@ -13,6 +15,7 @@ export async function writeTopicAction(
     prevState: WriteTopicState,
     formData: FormData
 ): Promise<WriteTopicState> {
+    await requireAdmin()
     let topic: Topic;
 
     try {

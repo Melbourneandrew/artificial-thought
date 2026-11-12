@@ -1,14 +1,7 @@
-import { createClient } from '@/utils/supabase/server'
-import { Task } from '@/types'
+import { getTaskTreeWithLogs, type TaskTreeItem } from '@/utils/repository/TaskRepo'
 import Link from 'next/link'
-export interface TaskTreeItem extends Task {
-    level: number
-    logs: Array<{
-        id: string
-        content: string
-        created_at: string
-    }>
-}
+
+export type { TaskTreeItem }
 
 export default async function TaskTreeView({
     searchParams,
@@ -20,17 +13,15 @@ export default async function TaskTreeView({
         return <div className="text-error">No task ID provided</div>
     }
 
-    const supabase = await createClient()
-
-    const { data: tasks, error } = await supabase
-        .rpc('get_task_tree_with_logs', { root_task_id: taskId })
-        .returns<TaskTreeItem[]>()
-
-    if (error) {
-        return <div className="text-error">Error loading task tree: {error.message}</div>
+    let tasks: TaskTreeItem[]
+    try {
+        tasks = await getTaskTreeWithLogs(taskId)
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        return <div className="text-error">Error loading task tree: {message}</div>
     }
 
-    if (!tasks?.length) {
+    if (!tasks.length) {
         return <div className="text-warning">No tasks found</div>
     }
 
@@ -106,7 +97,6 @@ export default async function TaskTreeView({
                 </div>
             ) : (
                 <div className="flex gap-4 overflow-x-auto">
-                    {/* Group tasks by level */}
                     {Array.from(new Set(tasks.map(task => task.level))).map(level => (
                         <div key={level} className="space-y-4 min-w-[400px]">
                             <h3 className="text-lg font-semibold mb-2">Level {level}</h3>

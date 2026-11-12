@@ -1,5 +1,7 @@
 'use server'
 
+import { requireAdmin } from '@/utils/require-admin'
+
 import { revalidatePath } from 'next/cache'
 import { getAllModels } from '@/utils/repository/ModelRepo'
 import { z } from 'zod'
@@ -11,6 +13,7 @@ type ActionState = {
 }
 
 export async function testProvider(prevState: ActionState, formData: FormData): Promise<ActionState> {
+    await requireAdmin()
     try {
         const modelId = formData.get('model_id') as string
 
@@ -39,7 +42,6 @@ export async function testProvider(prevState: ActionState, formData: FormData): 
         const structuredResult = await getStructuredCompletion<typeof schema>(
             messages,
             schema,
-            model.model_name,
             model.model_url
         )
         const result = JSON.stringify(structuredResult, null, 2)

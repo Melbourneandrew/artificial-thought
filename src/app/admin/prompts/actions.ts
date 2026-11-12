@@ -1,20 +1,12 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { updatePromptByKey } from '@/utils/repository/PromptRepo'
+import { requireAdmin } from '@/utils/require-admin'
 import { revalidatePath } from 'next/cache'
 
 export async function updatePrompt(promptKey: string, newPrompt: string) {
-    const supabase = await createClient()
-
-    const { error } = await supabase
-        .from('prompts')
-        .update({ prompt: newPrompt })
-        .eq('prompt_key', promptKey)
-
-    if (error) {
-        throw error
-    }
-
-    revalidatePath('/prompts')
+    await requireAdmin()
+    await updatePromptByKey(promptKey, newPrompt)
+    revalidatePath('/admin/prompts')
     return { success: true }
-} 
+}

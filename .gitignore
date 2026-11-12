@@ -28,6 +28,16 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env
+.env.*
+.dev.vars
+
+# cloudflare / local databases
+.open-next
+.wrangler
+cloudflare/dist
+*.sqlite
+*.sqlite.gz
+*.sqlite-journal
 
 # vercel
 .vercel

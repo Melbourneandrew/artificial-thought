@@ -1,26 +1,17 @@
-import { createClient } from '@/utils/supabase/server'
-import { Prompt } from '@/types'
+import { all, one, run } from "@/utils/db"
+import { Prompt } from "@/types"
 
 export async function getPromptByKey(promptKey: string): Promise<Prompt | null> {
-    const supabase = await createClient()
+    return one<Prompt>(
+        `SELECT prompt_key, prompt, created_at FROM prompts WHERE prompt_key = ? LIMIT 1`,
+        promptKey,
+    )
+}
 
-    const { data: prompts, error } = await supabase
-        .from('prompts')
-        .select('*')
-        .eq('prompt_key', promptKey)
-        .limit(1)
-
-    if (error) throw error
-    return prompts?.[0] || null
+export async function listPrompts(): Promise<Prompt[]> {
+    return all<Prompt>(`SELECT prompt_key, prompt, created_at FROM prompts ORDER BY prompt_key`)
 }
 
 export async function updatePromptByKey(promptKey: string, newPrompt: string): Promise<void> {
-    const supabase = await createClient()
-
-    const { error } = await supabase
-        .from('prompts')
-        .update({ prompt: newPrompt })
-        .eq('prompt_key', promptKey)
-
-    if (error) throw error
+    await run(`UPDATE prompts SET prompt = ? WHERE prompt_key = ?`, newPrompt, promptKey)
 }

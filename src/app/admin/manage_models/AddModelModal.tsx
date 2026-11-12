@@ -22,17 +22,17 @@ export default function AddModelModal() {
                             <span>{createState.error}</span>
                         </div>
                     )}
-                    <div className="form-control">
+                    <div className="flex flex-col gap-1">
                         <label className="label">
-                            <span className="label-text">Model Name</span>
+                            <span className="text-sm">Model Name</span>
                         </label>
-                        <input type="text" name="model_name" className="input input-bordered" required />
+                        <input type="text" name="model_name" className="input" required />
                     </div>
-                    <div className="form-control">
+                    <div className="flex flex-col gap-1">
                         <label className="label">
-                            <span className="label-text">Model URL</span>
+                            <span className="text-sm">Cloudflare model id</span>
                         </label>
-                        <input type="text" name="model_url" className="input input-bordered" required />
+                        <input type="text" name="model_url" className="input" required />
                     </div>
                     <div className="modal-action">
                         <button

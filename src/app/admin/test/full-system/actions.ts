@@ -1,5 +1,7 @@
 'use server'
 
+import { requireAdmin } from '@/utils/require-admin'
+
 import { redirect } from 'next/navigation'
 import { Author } from '@/types'
 import { createWriteTopicTask } from '@/utils/repository/TaskRepo'
@@ -14,6 +16,7 @@ export async function createTopicTaskAction(
     prevState: CreateTopicTaskState,
     formData: FormData
 ): Promise<CreateTopicTaskState> {
+    await requireAdmin()
     let taskId: string;
 
     try {

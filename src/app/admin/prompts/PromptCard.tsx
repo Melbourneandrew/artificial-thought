@@ -29,7 +29,7 @@ export function PromptCard({ promptKey, prompt, createdAt }: PromptCardProps) {
                     <h2 className="card-title">{promptKey}</h2>
                     <textarea
                         name="prompt"
-                        className="textarea textarea-bordered w-full min-h-[100px] my-2"
+                        className="textarea w-full min-h-[100px] my-2"
                         defaultValue={prompt}
                     />
                     <div className="flex justify-between items-center">

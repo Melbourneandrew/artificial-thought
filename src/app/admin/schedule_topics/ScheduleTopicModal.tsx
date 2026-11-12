@@ -26,40 +26,40 @@ export function ScheduleTopicModal() {
                 <h3 className="font-bold text-lg mb-4">Schedule New Topic</h3>
 
                 <form action={formAction} className="space-y-4">
-                    <div className="form-control">
+                    <div className="flex flex-col gap-1">
                         <label className="label">
-                            <span className="label-text">Topic Title</span>
+                            <span className="text-sm">Topic Title</span>
                         </label>
                         <input
                             type="text"
                             name="title"
                             placeholder="Enter topic title"
-                            className="input input-bordered w-full"
+                            className="input w-full"
                             required
                         />
                     </div>
 
-                    <div className="form-control">
+                    <div className="flex flex-col gap-1">
                         <label className="label">
-                            <span className="label-text">Created By</span>
+                            <span className="text-sm">Created By</span>
                         </label>
                         <input
                             type="text"
                             name="created_by_user_name"
                             placeholder="Enter your name"
-                            className="input input-bordered w-full"
+                            className="input w-full"
                             required
                         />
                     </div>
 
-                    <div className="form-control">
+                    <div className="flex flex-col gap-1">
                         <label className="label">
-                            <span className="label-text">Schedule For</span>
+                            <span className="text-sm">Schedule For</span>
                         </label>
                         <input
                             type="date"
                             name="scheduled_for"
-                            className="input input-bordered w-full"
+                            className="input w-full"
                             min={formatDate(new Date())}
                             defaultValue={(() => {
                                 const now = new Date()

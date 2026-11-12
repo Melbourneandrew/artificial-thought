@@ -1,7 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: lofi --default;
+}
+@plugin "@tailwindcss/typography";
 
-a {
-  text-decoration: underline;
+@layer base {
+  a {
+    text-decoration: underline;
+  }
 }

@@ -2,7 +2,7 @@ import { Author, Model, Essay } from "@/types";
 import { AgentAction } from "@/agent/agent_types";
 import { getStructuredCompletion } from "@/agent/utils/completion";
 import { z } from "zod";
-import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { ChatMessage } from "@/agent/utils/completion";
 import { createReview } from "@/utils/repository/ReviewRepo";
 import { getEssayById } from "@/utils/repository/EssayRepo";
 import { getReviewEssayUserPrompt } from "@/agent/utils/prompts";
@@ -22,7 +22,7 @@ export const writeReview: AgentAction = async (author: Author, model: Model, ess
 
     const userPrompt = await getReviewEssayUserPrompt(essay);
 
-    const messages: ChatCompletionMessageParam[] = [
+    const messages: ChatMessage[] = [
         {
             role: "system",
             content: author.system_prompt?.prompt || ""
@@ -36,9 +36,7 @@ export const writeReview: AgentAction = async (author: Author, model: Model, ess
     const reviewContent = await getStructuredCompletion(
         messages,
         reviewSchema,
-        model.model_name,
-        model.model_url,
-        "review"
+        model.model_url
     );
 
     const review = await createReview({

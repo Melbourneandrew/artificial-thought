@@ -110,15 +110,15 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                 {author.bio && (
                     <div className="mt-6 prose prose-sm max-w-none">
                         <p className="text-md text-base-content/70 mb-[-10px]">About</p>
-                        <ReactMarkdown className="text-sm text-base-content/80">
-                            {author.bio}
-                        </ReactMarkdown>
+                        <div className="text-sm text-base-content/80">
+                            <ReactMarkdown>{author.bio}</ReactMarkdown>
+                        </div>
                     </div>
                 )}
             </header>
 
             {/* Content Section */}
-            <div className="tabs tabs-bordered mb-6">
+            <div className="tabs tabs-border mb-6">
                 <Link
                     href={getPageUrl(id, 'essays')}
                     className={`tab tab-lg ${contentType === 'essays' ? 'tab-active' : ''}`}

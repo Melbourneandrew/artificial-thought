@@ -1,103 +1,35 @@
-import { createClient } from '@/utils/supabase/server'
-import { createClient as createBrowserClient } from '@/utils/supabase/client'
-import { Model } from '@/types'
+import { all, one, run } from "@/utils/db"
+import { newId, nowIso } from "@/utils/ids"
+import { Model } from "@/types"
 
 export async function getAllModels(): Promise<Model[]> {
-    const supabase = await createClient()
-
-    const { data: models, error } = await supabase
-        .from('models')
-        .select('*')
-        .order('model_name')
-
-    if (error) throw error
-    return models
+    return all<Model>(`SELECT id, model_name, model_url, created_at FROM models ORDER BY model_name`)
 }
 
-export async function createModel(model: Pick<Model, 'model_name' | 'model_url'>): Promise<Model> {
-    const supabase = await createClient()
-
-    const { data, error } = await supabase
-        .from('models')
-        .insert([model])
-        .select()
-        .single()
-
-    if (error) throw error
-    return data
+export async function createModel(model: Pick<Model, "model_name" | "model_url">): Promise<Model> {
+    const created: Model = {
+        id: newId(),
+        model_name: model.model_name,
+        model_url: model.model_url,
+        created_at: nowIso(),
+    }
+    await run(
+        `INSERT INTO models (id, model_name, model_url, created_at) VALUES (?, ?, ?, ?)`,
+        created.id,
+        created.model_name,
+        created.model_url,
+        created.created_at,
+    )
+    return created
 }
 
 export async function deleteModel(id: string): Promise<void> {
-    const supabase = await createClient()
-
-    const { error } = await supabase
-        .from('models')
-        .delete()
-        .eq('id', id)
-
-    if (error) throw error
+    await run(`DELETE FROM models WHERE id = ?`, id)
 }
 
-// Client methods
-export async function getAllModelsClient(): Promise<Model[]> {
-    const supabase = createBrowserClient()
-
-    const { data: models, error } = await supabase
-        .from('models')
-        .select('*')
-        .order('model_name')
-
-    if (error) throw error
-    return models
+export async function updateModelUrl(id: string, modelUrl: string): Promise<Model> {
+    await run(`UPDATE models SET model_url = ? WHERE id = ?`, modelUrl, id)
+    const updated = await one<Model>(`SELECT id, model_name, model_url, created_at FROM models WHERE id = ?`, id)
+    if (!updated) throw new Error("Failed to update model")
+    return updated
 }
-
-export async function createModelClient(model: Pick<Model, 'model_name' | 'model_url'>): Promise<Model> {
-    const supabase = createBrowserClient()
-
-    const { data, error } = await supabase
-        .from('models')
-        .insert([model])
-        .select()
-        .single()
-
-    if (error) throw error
-    return data
-}
-
-export async function updateModelClient(id: string, updates: Partial<Pick<Model, 'model_name' | 'model_url'>>): Promise<Model> {
-    const supabase = createBrowserClient()
-
-    const { data, error } = await supabase
-        .from('models')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single()
-
-    if (error) throw error
-    return data
-}
-
-export async function deleteModelClient(id: string): Promise<void> {
-    const supabase = createBrowserClient()
-
-    const { error } = await supabase
-        .from('models')
-        .delete()
-        .eq('id', id)
-
-    if (error) throw error
-}
-
-export async function updateModelUrl(id: string, model_url: string): Promise<Model> {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-        .from('models')
-        .update({ model_url })
-        .eq('id', id)
-        .select()
-        .single()
-
-    if (error) throw error
-    return data
-} 

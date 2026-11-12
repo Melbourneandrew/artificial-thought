@@ -1,0 +1,12 @@
+# Copy to .dev.vars. Wrangler and `next dev` read this file locally.
+# Do not put real tokens in git. Production secrets are set with `wrangler secret put`.
+
+NEXTJS_ENV=development
+LLM_MODE=mock
+CF_ACCESS_DEV_BYPASS=true
+CF_ACCESS_TEAM_DOMAIN=your-team.cloudflareaccess.com
+CF_ACCESS_AUD=replace-with-access-application-aud
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_AI_GATEWAY_ID=default
+CLOUDFLARE_API_TOKEN=
+NEXT_PUBLIC_URL=http://localhost:3000

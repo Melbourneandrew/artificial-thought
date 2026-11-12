@@ -19,14 +19,14 @@ export function WriteTopicForm({ authors }: WriteTopicFormProps) {
         <form action={formAction}>
             <div className="space-y-6">
                 {/* Author Selection */}
-                <div className="form-control w-full">
+                <div className="flex flex-col gap-1 w-full">
                     <label className="label" htmlFor="authorId">
-                        <span className="label-text">Select Author</span>
+                        <span className="text-sm">Select Author</span>
                     </label>
                     <select
                         id="authorId"
                         name="authorId"
-                        className="select select-bordered w-full"
+                        className="select w-full"
                         required
                         onChange={(e) => {
                             // When author is selected, store the full author data

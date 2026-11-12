@@ -56,7 +56,7 @@ const TestProvider = forwardRef<TestFormElement, TestProviderProps>(function Tes
                 <input type="hidden" name="url" value={url} />
 
                 <select
-                    className="select select-bordered select-sm w-48"
+                    className="select select-sm w-48"
                     value={selectedModel}
                     onChange={(e) => setSelectedModel(e.target.value)}
                     name="model_id"
