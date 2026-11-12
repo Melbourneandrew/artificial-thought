@@ -61,7 +61,7 @@ npm run dev
 
 `db:prepare` applies the D1 migrations to Miniflare and, if `topics` is empty, loads `fixtures/sample-content.sql`. The dev server is http://localhost:3000. Admin pages are open in this mode because `CF_ACCESS_DEV_BYPASS=true` is set and `next dev` runs with `NODE_ENV=development`. That bypass is compiled out of production builds.
 
-`npm run preview` builds the Workers bundle and serves it with Wrangler. Admin bypass does not apply there.
+`npm run preview` builds the Workers bundle and serves it with `wrangler dev --local`. The `--local` flag keeps the AI binding on Miniflare. Without it, Wrangler treats the AI binding as remote and asks you to log in. Admin bypass does not apply to this production build.
 
 To load the recovered SQLite file (do not commit it):
 
