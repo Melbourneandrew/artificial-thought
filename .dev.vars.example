@@ -1,8 +1,12 @@
 # Copy to .dev.vars. Wrangler and `next dev` read this file locally.
 # Do not put real tokens in git. Production secrets are set with `wrangler secret put`.
+#
+# Leave CLOUDFLARE_API_TOKEN empty to stay on LLM_MODE=mock (no model charges).
+# To call the real AI Gateway from this machine, set CLOUDFLARE_API_TOKEN and
+# CLOUDFLARE_ACCOUNT_ID and do not set LLM_MODE=mock. D1 and queues stay local.
+# Set LLM_MODE=mock to force placeholders even when a token is present.
 
 NEXTJS_ENV=development
-LLM_MODE=mock
 CF_ACCESS_DEV_BYPASS=true
 CF_ACCESS_TEAM_DOMAIN=your-team.cloudflareaccess.com
 CF_ACCESS_AUD=replace-with-access-application-aud

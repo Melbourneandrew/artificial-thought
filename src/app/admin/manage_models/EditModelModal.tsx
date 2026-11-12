@@ -66,6 +66,19 @@ export default function EditModelModal({
                         />
                     </div>
 
+                    <div className="flex flex-col gap-1">
+                        <label className="label">
+                            <span className="text-sm">Reasoning effort</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="reasoning_effort"
+                            defaultValue={selectedModel.reasoning_effort || ''}
+                            placeholder="low, none, off, or skip"
+                            className="input"
+                        />
+                    </div>
+
                     <div className="flex flex-col gap-1 mt-4">
                         <label className="label">
                             <span className="text-sm">Assign Authors</span>

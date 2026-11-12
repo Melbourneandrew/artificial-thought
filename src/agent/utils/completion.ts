@@ -1,5 +1,14 @@
 import { z } from "zod"
 import { getRuntimeConfig } from "@/utils/db"
+import {
+    extractMessageText,
+    extractToolArguments,
+    forcedToolChoice,
+    openAiTool,
+    parseJsonObject,
+    reasoningFields,
+    type ToolSpec,
+} from "@/agent/utils/model-call"
 
 export type ChatMessage = {
     role: "system" | "user" | "assistant"
@@ -49,55 +58,28 @@ export function generateDummyData(schema: z.ZodType): unknown {
     return "Mock response for local development."
 }
 
-function schemaHint(schema: z.ZodType): string {
-    return `Respond with one JSON object and no markdown. Match this shape exactly:\n${JSON.stringify(generateDummyData(schema), null, 2)}`
-}
-
-export function extractModelText(payload: unknown): string {
-    if (typeof payload === "string") return payload
-    if (!payload || typeof payload !== "object") return ""
-    const record = payload as Record<string, unknown>
-    if (typeof record.response === "string") return record.response
-    if (typeof record.result === "string") return record.result
-    const choices = record.choices
-    if (!Array.isArray(choices) || !choices[0] || typeof choices[0] !== "object") return ""
-    const message = (choices[0] as { message?: { content?: unknown } }).message
-    const content = message?.content
-    if (typeof content === "string") return content
-    if (!Array.isArray(content)) return ""
-    return content.map((part) => {
-        if (typeof part === "string") return part
-        if (part && typeof part === "object" && "text" in part) return String((part as { text: unknown }).text)
-        return ""
-    }).join("")
-}
-
-export function parseJsonObject(text: string): unknown {
-    const withoutFence = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim()
-    const start = withoutFence.indexOf("{")
-    const end = withoutFence.lastIndexOf("}")
-    const slice = start >= 0 && end > start ? withoutFence.slice(start, end + 1) : withoutFence
-    return JSON.parse(slice)
-}
-
-async function callGateway(modelId: string, messages: ChatMessage[]): Promise<{ model: string; text: string }> {
+async function callGateway(
+    modelId: string,
+    messages: ChatMessage[],
+    tool: ToolSpec,
+    reasoningEffort: string | null | undefined,
+): Promise<{ model: string; payload: unknown }> {
     const config = await getRuntimeConfig()
     const gatewayId = config.gatewayId || "default"
+    const input = {
+        messages,
+        max_tokens: 4096,
+        temperature: 0.7,
+        tools: [openAiTool(tool)],
+        tool_choice: forcedToolChoice(tool.name),
+        ...reasoningFields(reasoningEffort),
+    }
 
     if (config.ai) {
         const ai = config.ai as unknown as GatewayRunner
-        const payload = await ai.run(modelId, {
-            messages,
-            max_tokens: 4096,
-            temperature: 0.7,
-        }, {
-            gateway: { id: gatewayId },
-        })
+        const payload = await ai.run(modelId, input, { gateway: { id: gatewayId } })
         const record = payload && typeof payload === "object" ? payload as { model?: string } : {}
-        return {
-            model: record.model || modelId,
-            text: extractModelText(payload),
-        }
+        return { model: record.model || modelId, payload }
     }
 
     if (!config.apiToken || !config.accountId) {
@@ -111,12 +93,7 @@ async function callGateway(modelId: string, messages: ChatMessage[]): Promise<{ 
             "Content-Type": "application/json",
             "cf-aig-gateway-id": gatewayId,
         },
-        body: JSON.stringify({
-            model: modelId,
-            messages,
-            max_tokens: 4096,
-            temperature: 0.7,
-        }),
+        body: JSON.stringify({ model: modelId, ...input }),
     })
     if (!response.ok) {
         const body = await response.text()
@@ -124,16 +101,15 @@ async function callGateway(modelId: string, messages: ChatMessage[]): Promise<{ 
     }
     const payload = await response.json()
     const record = payload as { model?: string }
-    return {
-        model: record.model || modelId,
-        text: extractModelText(payload),
-    }
+    return { model: record.model || modelId, payload }
 }
 
 export async function getStructuredCompletion<T extends z.ZodType>(
     messages: ChatMessage[],
     schema: T,
     modelId: string,
+    tool: ToolSpec,
+    reasoningEffort?: string | null,
 ): Promise<StructuredCompletion<z.infer<T>>> {
     if (process.env.LLM_MODE === "mock" || process.env.TASK_TESTING_MODE === "true") {
         return {
@@ -150,17 +126,25 @@ export async function getStructuredCompletion<T extends z.ZodType>(
         }
     }
 
-    const guided: ChatMessage[] = [
-        { role: "system", content: schemaHint(schema) },
-        ...messages,
-    ]
-    const { model, text } = await callGateway(modelId, guided)
-    if (!text) {
-        throw new Error(`Model ${modelId} returned an empty response`)
+    const { model, payload } = await callGateway(modelId, messages, tool, reasoningEffort)
+    const toolArguments = extractToolArguments(payload)
+    if (toolArguments) {
+        return { model, completion: schema.parse(toolArguments) }
     }
-    const parsed = parseJsonObject(text)
-    return {
-        model,
-        completion: schema.parse(parsed),
+
+    const text = extractMessageText(payload)
+    console.error(
+        `Model ${modelId} did not call ${tool.name}. Falling back to JSON in the message text.`,
+        text.slice(0, 1000),
+    )
+    if (!text) {
+        throw new Error(`Model ${modelId} returned no ${tool.name} tool call and no message text`)
+    }
+    try {
+        return { model, completion: schema.parse(parseJsonObject(text)) }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.error(`Model ${modelId} fallback for ${tool.name} failed validation: ${message}`)
+        throw new Error(`Model ${modelId} returned no usable ${tool.name} tool call`)
     }
 }

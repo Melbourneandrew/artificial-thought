@@ -16,6 +16,7 @@ export interface Model {
     model_name: string
     model_url: string
     created_at: string
+    reasoning_effort?: string | null
 }
 
 export interface Prompt {

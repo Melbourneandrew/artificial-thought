@@ -4,9 +4,6 @@
   "main": "cloudflare/dist/worker.js",
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "limits": {
-    "cpu_ms": 300000
-  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -18,21 +15,24 @@
     }
   ],
   "ai": {
-    "binding": "AI"
+    "binding": "AI",
+    "remote": true
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "artificial-thought",
       "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "migrations"
+      "migrations_dir": "migrations",
+      "remote": false
     }
   ],
   "queues": {
     "producers": [
       {
         "binding": "TASK_QUEUE",
-        "queue": "artificial-thought-tasks"
+        "queue": "artificial-thought-tasks",
+        "remote": false
       }
     ],
     "consumers": [

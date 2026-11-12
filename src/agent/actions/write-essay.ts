@@ -1,14 +1,16 @@
 import { Author, Essay, Model, Topic } from "@/types";
 import { AgentAction } from "@/agent/agent_types";
 import { ChatMessage, getStructuredCompletion } from "@/agent/utils/completion";
+import { writeEssayTool } from "@/agent/utils/model-call";
 import { z } from "zod";
 import { createEssay } from "@/utils/repository/EssayRepo";
 import { getWriteEssayUserPrompt } from "@/agent/utils/prompts";
 
 const essaySchema = z.object({
-    title: z.string().describe('The title of the essay.'),
-    content: z.string().describe('The content of the essay.'),
-    description: z.string().describe('A short description of the essay.'),
+    title: z.string().min(1),
+    description: z.string().min(1),
+    body: z.string().min(1).optional(),
+    content: z.string().min(1).optional(),
 });
 
 export const writeEssay: AgentAction = async (author: Author, model: Model, topic: Topic): Promise<Essay> => {
@@ -28,13 +30,18 @@ export const writeEssay: AgentAction = async (author: Author, model: Model, topi
     const { completion: essayContent, model: essayModel } = await getStructuredCompletion(
         messages,
         essaySchema,
-        model.model_url
+        model.model_url,
+        writeEssayTool,
+        model.reasoning_effort,
     );
+
+    const body = essayContent.body || essayContent.content
+    if (!body) throw new Error("Essay tool call did not include a body")
 
     const essay = await createEssay({
         title: essayContent.title,
         description: essayContent.description,
-        content: essayContent.content,
+        content: body,
         topic_id: topic.id,
         author_id: author.id,
         model_name: essayModel

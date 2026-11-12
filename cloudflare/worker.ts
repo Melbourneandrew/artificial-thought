@@ -10,10 +10,11 @@ declare module "../.open-next/worker.js" {
     export default openNextWorker
 }
 
-import openNextWorker from "../.open-next/worker.js"
-
 const worker = {
-    fetch: openNextWorker.fetch,
+    async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext) {
+        const openNextWorker = await import("../.open-next/worker.js")
+        return openNextWorker.default.fetch(request, env, ctx)
+    },
 
     async scheduled(_controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext) {
         ctx.waitUntil(runWithBindings(bindingsFromEnv(env), () => createDailyTopicTask().then(() => undefined)))

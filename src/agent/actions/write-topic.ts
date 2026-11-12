@@ -3,6 +3,7 @@ import { AgentAction } from "@/agent/agent_types";
 import { getStructuredCompletion } from "@/agent/utils/completion";
 import { z } from "zod";
 import { ChatMessage } from "@/agent/utils/completion";
+import { writeTopicTool } from "@/agent/utils/model-call";
 import { createTopic, getPreviousTopics } from "@/utils/repository/TopicRepo";
 import { getWriteTopicUserPrompt } from "@/agent/utils/prompts";
 const topicSchema = z.object({
@@ -28,7 +29,9 @@ export const writeTopic: AgentAction = async (author: Author, model: Model) => {
     const topicContent = await getStructuredCompletion(
         messages,
         topicSchema,
-        model.model_url
+        model.model_url,
+        writeTopicTool,
+        model.reasoning_effort,
     );
 
     const topic = await createTopic({

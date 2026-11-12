@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createModel, deleteModel, updateModelUrl } from '@/utils/repository/ModelRepo'
+import { createModel, deleteModel, updateModel } from '@/utils/repository/ModelRepo'
 import { setModelAuthors } from '@/utils/repository/AuthorRepo'
 import { requireAdmin } from '@/utils/require-admin'
 
@@ -32,6 +32,7 @@ export async function handleEditModel(prevState: ActionState, formData: FormData
         await requireAdmin()
         const id = formData.get('id') as string
         const model_url = formData.get('model_url') as string
+        const reasoning = String(formData.get('reasoning_effort') ?? '').trim()
         const author_ids = formData.getAll('author_ids').map(authorId => authorId.toString())
         const trimmedModelUrl = model_url.trim()
 
@@ -39,7 +40,7 @@ export async function handleEditModel(prevState: ActionState, formData: FormData
             return { loading: false, error: 'Missing required fields' }
         }
 
-        await updateModelUrl(id, trimmedModelUrl)
+        await updateModel(id, trimmedModelUrl, reasoning || null)
 
         if (author_ids.length === 0) {
             return {

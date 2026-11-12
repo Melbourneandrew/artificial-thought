@@ -7,4 +7,4 @@ if [[ ! -f .dev.vars ]]; then
 fi
 
 node scripts/prepare-local-db.mjs
-exec npm run dev
+exec bash scripts/start-dev.sh

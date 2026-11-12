@@ -3,6 +3,7 @@ import { AgentAction } from "@/agent/agent_types";
 import { getStructuredCompletion } from "@/agent/utils/completion";
 import { z } from "zod";
 import { ChatMessage } from "@/agent/utils/completion";
+import { submitReviewTool } from "@/agent/utils/model-call";
 import { createReview } from "@/utils/repository/ReviewRepo";
 import { getEssayById } from "@/utils/repository/EssayRepo";
 import { getReviewEssayUserPrompt } from "@/agent/utils/prompts";
@@ -36,7 +37,9 @@ export const writeReview: AgentAction = async (author: Author, model: Model, ess
     const reviewContent = await getStructuredCompletion(
         messages,
         reviewSchema,
-        model.model_url
+        model.model_url,
+        submitReviewTool,
+        model.reasoning_effort,
     );
 
     const review = await createReview({

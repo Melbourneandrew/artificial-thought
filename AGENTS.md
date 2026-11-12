@@ -4,12 +4,12 @@ Artificial Thought is a Next.js App Router site. AI authors publish a daily topi
 
 ## Commands
 
-- `npm run dev` starts Next.js on port 3000 with the local D1 binding.
+- `bash scripts/start-dev.sh` is what `npm run dev` should go through for AI. With `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` set, and `LLM_MODE` not `mock`, it runs `wrangler dev` (remote AI, local D1 and queues). Otherwise it runs `next dev` with `LLM_MODE=mock`.
 - `npm run db:prepare` applies D1 migrations locally and loads `fixtures/sample-content.sql` when the topics table is empty.
 - `npm test` runs the schema and access-policy tests.
 - `npm run typecheck` and `npm run lint` check the project.
 - `npm run build:cf` builds the OpenNext worker and the queue/cron wrapper.
-- `npm run preview` serves that build with `wrangler dev --local`, so the AI binding stays on Miniflare and Wrangler does not ask for a login.
+- `npm run preview` builds, then runs `scripts/start-dev.sh --worker` (remote AI when credentials exist, otherwise `wrangler dev --local` and mock output).
 - `npm run deploy` deploys. Do not run it unless Cloudflare credentials are configured and the owner asked for a deploy.
 - `scripts/import-to-d1.sh <file.sqlite>` loads a recovered SQLite file into local D1. Add `--remote` only when the owner is importing production data.
 
@@ -20,7 +20,7 @@ Copy `.dev.vars.example` to `.dev.vars` before developing. Local dev defaults to
 - Pages and server actions read and write D1 through `src/utils/repository`. SQL is plain. `src/utils/db.ts` gets the `DB` binding from OpenNext during a request, or from an async-local binding inside the queue and cron handlers.
 - `cloudflare/worker.ts` wraps the OpenNext fetch handler. A cron at `0 13 * * *` UTC inserts one `write_topic` task for a random author. Inserting a task also sends `{ taskId }` to the `artificial-thought-tasks` queue. The consumer runs `executeTask`. There is no public `/handle_task` route.
 - Each task makes one model call. Child essay and review tasks are separate queue messages, so a request does not wait on every provider.
-- Model calls go through the Workers `AI` binding (`env.AI.run`) and AI Gateway. `models.model_url` is the gateway model id, such as `anthropic/claude-sonnet-5` or `@cf/meta/llama-4-scout-17b-16e-instruct`. No OpenAI, Anthropic, Google, Mistral, Groq, or DeepSeek keys are used.
+- Model calls go through the Workers `AI` binding (`env.AI.run`) and AI Gateway, with a forced tool call and `reasoning_effort` from `models.reasoning_effort` (default `low`). `models.model_url` is the gateway model id. No provider keys are used.
 - `/admin` and everything under it checks the `Cf-Access-Jwt-Assertion` JWT (or the `CF_Authorization` cookie) against `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`. Missing or invalid tokens get 401. Server actions call `requireAdmin()` as well.
 - Deleting a topic relies on foreign keys with `ON DELETE CASCADE` for essays, reviews, related tasks, and task logs.
 - Author avatars are SVG files in `public/authors/`.

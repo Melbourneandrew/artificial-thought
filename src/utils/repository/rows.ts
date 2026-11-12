@@ -12,17 +12,19 @@ export type AuthorRow = {
     model_name?: string | null
     model_url?: string | null
     model_created_at?: string | null
+    reasoning_effort?: string | null
     prompt_text?: string | null
     prompt_created_at?: string | null
 }
 
-export function mapModel(row: { model_row_id?: string | null; model_name?: string | null; model_url?: string | null; model_created_at?: string | null }): Model | undefined {
+export function mapModel(row: { model_row_id?: string | null; model_name?: string | null; model_url?: string | null; model_created_at?: string | null; reasoning_effort?: string | null }): Model | undefined {
     if (!row.model_row_id || !row.model_name || !row.model_url) return undefined
     return {
         id: row.model_row_id,
         model_name: row.model_name,
         model_url: row.model_url,
         created_at: row.model_created_at || "",
+        reasoning_effort: row.reasoning_effort ?? null,
     }
 }
 
@@ -61,6 +63,7 @@ export const authorSelect = `
     m.model_name,
     m.model_url,
     m.created_at AS model_created_at,
+    m.reasoning_effort,
     p.prompt AS prompt_text,
     p.created_at AS prompt_created_at
 `

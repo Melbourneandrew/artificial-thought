@@ -8,6 +8,7 @@ function openMigrated() {
     db.exec("PRAGMA foreign_keys = ON")
     db.exec(readFileSync(new URL("../migrations/0001_init.sql", import.meta.url), "utf8"))
     db.exec(readFileSync(new URL("../migrations/0002_catalog.sql", import.meta.url), "utf8"))
+    db.exec(readFileSync(new URL("../migrations/0003_reasoning.sql", import.meta.url), "utf8"))
     return db
 }
 
@@ -18,6 +19,10 @@ test("catalog seeds the original authors plus Grok, Kimi, and Qwen", () => {
     const claude = db.prepare("SELECT model_url, profile_picture_url FROM models m JOIN authors a ON a.model_id = m.id WHERE a.name = 'Claude'").get()
     assert.equal(claude.model_url, "anthropic/claude-sonnet-5")
     assert.equal(claude.profile_picture_url, "/authors/anthropic.svg")
+    const deepseek = db.prepare("SELECT reasoning_effort FROM models WHERE model_url = '@cf/deepseek-ai/deepseek-v4-pro-0813'").get() as { reasoning_effort: string }
+    assert.equal(deepseek.reasoning_effort, "none")
+    const gpt = db.prepare("SELECT reasoning_effort FROM models WHERE model_url = 'openai/gpt-4.1'").get() as { reasoning_effort: string }
+    assert.equal(gpt.reasoning_effort, "skip")
 })
 
 test("deleting a topic cascades to essays, reviews, tasks, and logs", () => {

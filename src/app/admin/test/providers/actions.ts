@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { getAllModels } from '@/utils/repository/ModelRepo'
 import { z } from 'zod'
 import { getStructuredCompletion } from '@/agent/utils/completion'
+import type { ToolSpec } from '@/agent/utils/model-call'
 
 type ActionState = {
     error: string
@@ -35,14 +36,28 @@ export async function testProvider(prevState: ActionState, formData: FormData): 
         ]
 
         const schema = z.object({
-            greeting: z.string().describe('A friendly greeting'),
-            funFact: z.string().describe('An interesting fun fact about technology')
+            greeting: z.string().min(1),
+            funFact: z.string().min(1),
         })
+        const tool: ToolSpec = {
+            name: "submit_test",
+            description: "Submit a greeting and a fun fact.",
+            parameters: {
+                type: "object",
+                properties: {
+                    greeting: { type: "string", description: "A friendly greeting." },
+                    funFact: { type: "string", description: "An interesting fun fact about technology." },
+                },
+                required: ["greeting", "funFact"],
+            },
+        }
 
         const structuredResult = await getStructuredCompletion<typeof schema>(
             messages,
             schema,
-            model.model_url
+            model.model_url,
+            tool,
+            model.reasoning_effort,
         )
         const result = JSON.stringify(structuredResult, null, 2)
 
