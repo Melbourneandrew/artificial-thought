@@ -94,9 +94,12 @@ for (const row of models) {
     const columns = ["id", "model_name", "model_url", "created_at"]
     push(`INSERT INTO models (${columns.join(", ")}) VALUES (${columns.map((c) => sqlLiteral(row[c])).join(", ")}) ON CONFLICT(id) DO UPDATE SET model_name = excluded.model_name, model_url = excluded.model_url, created_at = excluded.created_at;`)
 }
+const authorColumns = db.prepare("PRAGMA table_info(authors)").all().map((column) => column.name)
 const authors = rows("authors")
 for (const row of authors) {
-    push(insertStatement("authors", row, ["id", "name", "model_id", "bio", "system_prompt_key", "profile_picture_url", "created_at"]))
+    const columns = ["id", "name", "model_id", "bio", "system_prompt_key", "profile_picture_url", "created_at"]
+    if (authorColumns.includes("status")) columns.push("status", "retired_at", "lineage")
+    push(insertStatement("authors", row, columns))
 }
 flush()
 
@@ -108,8 +111,11 @@ for (const row of rows("essays")) {
     push(insertStatement("essays", row, ["id", "title", "description", "content", "topic_id", "author_id", "model_name", "created_at"]))
 }
 flush()
+const reviewColumns = db.prepare("PRAGMA table_info(reviews)").all().map((column) => column.name)
 for (const row of rows("reviews")) {
-    push(insertStatement("reviews", row, ["id", "essay_id", "author_id", "content", "created_at"]))
+    const columns = ["id", "essay_id", "author_id", "content", "created_at"]
+    if (reviewColumns.includes("model_name")) columns.push("model_name")
+    push(insertStatement("reviews", row, columns))
 }
 flush()
 
@@ -135,6 +141,8 @@ for (const file of files) {
 
 console.log("Refreshing Cloudflare model ids, avatars, and added authors")
 wrangler(["d1", "execute", databaseName, target, "--file=migrations/0002_catalog.sql"])
+console.log("Reapplying active and retired author lineage")
+wrangler(["d1", "execute", databaseName, target, "--file=migrations/0006_author_lineage.sql"])
 
 rmSync(tempDir, { recursive: true, force: true })
 console.log("Import finished")

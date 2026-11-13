@@ -1,9 +1,10 @@
 import { createWriteTopicTask } from "@/utils/repository/TaskRepo"
+import { ACTIVE_AUTHOR_PREDICATE } from "@/utils/author-status"
 import { one } from "@/utils/db"
 import { Author } from "@/types"
 
 export async function createDailyTopicTask(): Promise<string | null> {
-    const author = await one<{ id: string }>(`SELECT id FROM authors ORDER BY RANDOM() LIMIT 1`)
+    const author = await one<{ id: string }>(`SELECT id FROM authors WHERE ${ACTIVE_AUTHOR_PREDICATE} ORDER BY RANDOM() LIMIT 1`)
     if (!author) {
         console.error("No authors available for the daily topic task")
         return null

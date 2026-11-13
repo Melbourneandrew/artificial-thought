@@ -1,11 +1,11 @@
 import { getAllEssays } from '@/utils/repository/EssayRepo'
-import { getAllAuthors } from '@/utils/repository/AuthorRepo'
+import { getActiveAuthors } from '@/utils/repository/AuthorRepo'
 import { WriteReviewForm } from './WriteReviewForm'
 
 export default async function WriteReviewPage() {
     const [{ essays }, authors] = await Promise.all([
         getAllEssays(1, 25), // Get first 25 essays
-        getAllAuthors()
+        getActiveAuthors()
     ])
 
     // Add validation

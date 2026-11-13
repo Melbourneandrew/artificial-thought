@@ -1,11 +1,11 @@
 import { getPublishedTopics } from '@/utils/repository/TopicRepo'
-import { getAllAuthors } from '@/utils/repository/AuthorRepo'
+import { getActiveAuthors } from '@/utils/repository/AuthorRepo'
 import { WriteEssayForm } from './WriteEssayForm'
 
 export default async function WriteEssayPage() {
     const [topicsData, authors] = await Promise.all([
         getPublishedTopics(),
-        getAllAuthors()
+        getActiveAuthors()
     ])
 
     return (

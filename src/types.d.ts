@@ -32,6 +32,13 @@ export interface Author {
     system_prompt_key: string
     profile_picture_url: string | null
     created_at: string
+    status?: "active" | "retired"
+    retired_at?: string | null
+    lineage?: string | null
+    essay_count?: number
+    first_essay_at?: string | null
+    last_essay_at?: string | null
+    successor?: { id: string; name: string } | null
     model?: Model
     essays?: Essay[]
     reviews?: Review[]
@@ -59,6 +66,7 @@ export interface Review {
     author_id: string
     content: string
     created_at: string
+    model_name?: string | null
     author?: Author
     essay: Essay
 }

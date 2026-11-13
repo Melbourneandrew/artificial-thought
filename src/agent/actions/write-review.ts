@@ -45,7 +45,8 @@ export const writeReview: AgentAction = async (author: Author, model: Model, ess
     const review = await createReview({
         essay_id: essay.id,
         author_id: author.id,
-        content: reviewContent.completion.content
+        content: reviewContent.completion.content,
+        model_name: reviewContent.model,
     });
 
     return review.id;

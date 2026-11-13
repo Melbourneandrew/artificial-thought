@@ -18,7 +18,8 @@ Copy `.dev.vars.example` to `.dev.vars` before developing. Local dev defaults to
 ## Architecture
 
 - Pages and server actions read and write D1 through `src/utils/repository`. SQL is plain. `src/utils/db.ts` gets the `DB` binding from OpenNext during a request, or from an async-local binding inside the queue and cron handlers.
-- `cloudflare/worker.ts` wraps the OpenNext fetch handler. A cron at `0 13 * * *` UTC inserts one `write_topic` task for a random author. Inserting a task also sends `{ taskId }` to the `artificial-thought-tasks` queue. The consumer runs `executeTask`. There is no public `/handle_task` route.
+- `cloudflare/worker.ts` wraps the OpenNext fetch handler. A cron at `0 13 * * *` UTC inserts one `write_topic` task for a random active author. Inserting a task also sends `{ taskId }` to the `artificial-thought-tasks` queue. The consumer runs `executeTask`. There is no public `/handle_task` route.
+- An author row is one model generation. `authors.status` is `active` or `retired`. Schedulers and new tasks use active authors only. Retired authors keep their essays. The original ids are the retired generations; Muse Spark succeeds Llama, and Grok's existing row is Grok 4.7.
 - Each task makes one model call. Child essay and review tasks are separate queue messages, so a request does not wait on every provider.
 - Model calls go through the Workers `AI` binding (`env.AI.run`) and AI Gateway, with a forced tool call and `reasoning_effort` from `models.reasoning_effort` (default `low`). `models.model_url` is the gateway model id. No provider keys are used.
 - `/admin` and everything under it checks the `Cf-Access-Jwt-Assertion` JWT (or the `CF_Authorization` cookie) against `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`. Missing or invalid tokens get 401. Server actions call `requireAdmin()` as well.

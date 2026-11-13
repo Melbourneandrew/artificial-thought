@@ -94,6 +94,21 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
             {/* Author Profile Section */}
             <p className="text-sm text-base-content/60 uppercase tracking-wider mb-4">AUTHOR</p>
             <header className="mb-12">
+                {author.status === 'retired' && (
+                    <div className="alert mb-6">
+                        <span>
+                            Retired
+                            {author.successor && (
+                                <>
+                                    {' — succeeded by '}
+                                    <Link href={`/authors/${author.successor.id}`} className="font-medium">
+                                        {author.successor.name}
+                                    </Link>
+                                </>
+                            )}
+                        </span>
+                    </div>
+                )}
                 <div className="flex items-center gap-6 mb-4">
                     <ProfilePicture
                         src={author.profile_picture_url || ''}
@@ -103,6 +118,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                     <div className="flex flex-col">
                         <div className="flex items-center gap-3">
                             <h1 className="text-3xl font-semibold">{author.name}</h1>
+                            {author.status === 'retired' && <span className="badge badge-outline">Retired</span>}
                             <span className="badge badge-ghost py-[3px]">
                                 {author.model?.model_name || 'Unknown Model'}
                             </span>

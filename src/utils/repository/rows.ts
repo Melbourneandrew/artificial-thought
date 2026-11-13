@@ -8,6 +8,14 @@ export type AuthorRow = {
     system_prompt_key: string
     profile_picture_url: string | null
     created_at: string
+    status?: string | null
+    retired_at?: string | null
+    lineage?: string | null
+    essay_count?: number | null
+    first_essay_at?: string | null
+    last_essay_at?: string | null
+    successor_id?: string | null
+    successor_name?: string | null
     model_row_id?: string | null
     model_name?: string | null
     model_url?: string | null
@@ -38,6 +46,7 @@ export function mapPrompt(row: AuthorRow): Prompt | undefined {
 }
 
 export function mapAuthor(row: AuthorRow): Author {
+    const status = row.status === "retired" ? "retired" : "active"
     return {
         id: row.id,
         name: row.name,
@@ -45,6 +54,15 @@ export function mapAuthor(row: AuthorRow): Author {
         system_prompt_key: row.system_prompt_key,
         profile_picture_url: row.profile_picture_url,
         created_at: row.created_at,
+        status,
+        retired_at: row.retired_at ?? null,
+        lineage: row.lineage ?? null,
+        essay_count: row.essay_count ?? 0,
+        first_essay_at: row.first_essay_at ?? null,
+        last_essay_at: row.last_essay_at ?? null,
+        successor: row.successor_id && row.successor_name
+            ? { id: row.successor_id, name: row.successor_name }
+            : null,
         bio: row.bio || undefined,
         model: mapModel(row),
         system_prompt: mapPrompt(row),
@@ -59,6 +77,14 @@ export const authorSelect = `
     a.system_prompt_key,
     a.profile_picture_url,
     a.created_at,
+    a.status,
+    a.retired_at,
+    a.lineage,
+    (SELECT COUNT(*) FROM essays e WHERE e.author_id = a.id) AS essay_count,
+    (SELECT MIN(e.created_at) FROM essays e WHERE e.author_id = a.id) AS first_essay_at,
+    (SELECT MAX(e.created_at) FROM essays e WHERE e.author_id = a.id) AS last_essay_at,
+    (SELECT s.id FROM authors s WHERE s.lineage = a.lineage AND s.lineage IS NOT NULL AND s.status = 'active' AND s.id != a.id LIMIT 1) AS successor_id,
+    (SELECT s.name FROM authors s WHERE s.lineage = a.lineage AND s.lineage IS NOT NULL AND s.status = 'active' AND s.id != a.id LIMIT 1) AS successor_name,
     m.id AS model_row_id,
     m.model_name,
     m.model_url,

@@ -1,5 +1,7 @@
 import { bumpPublicCache } from "@/utils/bump-public-cache"
-import { all, one, run } from "@/utils/db"
+import { ACTIVE_AUTHOR_PREDICATE, isSchedulableAuthor } from "@/utils/author-status"
+import { all, getDb, one, run } from "@/utils/db"
+import { newId, nowIso } from "@/utils/ids"
 import { Author } from "@/types"
 import { AuthorRow, authorSelect, mapAuthor } from "@/utils/repository/rows"
 
@@ -12,6 +14,75 @@ const authorFrom = `
 export async function getAllAuthors(): Promise<Author[]> {
     const rows = await all<AuthorRow>(`SELECT ${authorSelect} ${authorFrom} ORDER BY a.name`)
     return rows.map(mapAuthor)
+}
+
+export async function getActiveAuthors(): Promise<Author[]> {
+    const rows = await all<AuthorRow>(
+        `SELECT ${authorSelect} ${authorFrom} WHERE a.${ACTIVE_AUTHOR_PREDICATE} ORDER BY a.name`,
+    )
+    return rows.map(mapAuthor)
+}
+
+export async function assertSchedulableAuthor(authorId: string): Promise<void> {
+    const row = await one<{ status: string }>(`SELECT status FROM authors WHERE id = ?`, authorId)
+    if (!row || !isSchedulableAuthor(row.status)) {
+        throw new Error(`Author ${authorId} is retired and cannot take new tasks`)
+    }
+}
+
+function lineageKey(name: string, existing: string | null | undefined): string {
+    const current = (existing || "").trim()
+    if (current) return current
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+    return slug || "author"
+}
+
+export async function retireAndReplace(input: {
+    authorId: string
+    modelName: string
+    modelUrl: string
+    authorName?: string
+}): Promise<{ retiredId: string; activeId: string }> {
+    const modelName = input.modelName.trim()
+    const modelUrl = input.modelUrl.trim()
+    if (!modelName || !modelUrl) throw new Error("Model name and Cloudflare model id are required")
+
+    const existing = await getAuthorById(input.authorId)
+    if (!existing || !isSchedulableAuthor(existing.status)) {
+        throw new Error("Only an active author can be retired")
+    }
+
+    const lineage = lineageKey(existing.name, existing.lineage)
+    const activeId = newId()
+    const modelId = newId()
+    const createdAt = nowIso()
+    const authorName = input.authorName?.trim() || existing.name
+    const db = await getDb()
+    await db.batch([
+        db.prepare(
+            `INSERT INTO models (id, model_name, model_url, created_at, reasoning_effort) VALUES (?, ?, ?, ?, 'low')`,
+        ).bind(modelId, modelName, modelUrl, createdAt),
+        db.prepare(
+            `INSERT INTO authors (id, name, model_id, bio, system_prompt_key, profile_picture_url, created_at, status, retired_at, lineage)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', NULL, ?)`,
+        ).bind(
+            activeId,
+            authorName,
+            modelId,
+            existing.bio ?? null,
+            existing.system_prompt_key,
+            existing.profile_picture_url,
+            createdAt,
+            lineage,
+        ),
+        db.prepare(
+            `UPDATE authors SET status = 'retired', retired_at = ?, lineage = ? WHERE id = ? AND status = 'active'`,
+        ).bind(createdAt, lineage, existing.id),
+    ])
+    const retired = await getAuthorById(existing.id)
+    if (retired?.status !== "retired") throw new Error("Failed to retire the author")
+    await bumpPublicCache()
+    return { retiredId: existing.id, activeId }
 }
 
 export async function getAuthorById(id: string): Promise<Author | null> {
@@ -129,14 +200,14 @@ export async function getAuthorWithEssaysAndReviews(id: string): Promise<Author 
 }
 
 export async function setModelAuthors(modelId: string, authorIds: string[]): Promise<void> {
-    await run(`UPDATE authors SET model_id = NULL WHERE model_id = ?`, modelId)
+    await run(`UPDATE authors SET model_id = NULL WHERE model_id = ? AND status = 'active'`, modelId)
     if (authorIds.length === 0) {
         await bumpPublicCache()
         return
     }
     const placeholders = authorIds.map(() => "?").join(", ")
     await run(
-        `UPDATE authors SET model_id = ? WHERE id IN (${placeholders})`,
+        `UPDATE authors SET model_id = ? WHERE status = 'active' AND id IN (${placeholders})`,
         modelId,
         ...authorIds,
     )

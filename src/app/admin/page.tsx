@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import PromptIcon from '@/components/icons/PromptIcon'
+import AuthorIcon from '@/components/icons/AuthorIcon'
 import ModelIcon from '@/components/icons/ModelIcon'
 import PlayIcon from '@/components/icons/PlayIcon'
 import CalendarIcon from '@/components/icons/CalendarIcon'
@@ -17,6 +18,12 @@ export default function AdminDashboard() {
             title: 'Model Management',
             description: 'Configure and manage AI models',
             Icon: ModelIcon
+        },
+        {
+            href: '/admin/authors',
+            title: 'Authors',
+            description: 'Retire an author and replace them with a new model',
+            Icon: AuthorIcon
         },
         {
             href: '/admin/test',

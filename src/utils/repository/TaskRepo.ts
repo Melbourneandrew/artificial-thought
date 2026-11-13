@@ -1,3 +1,4 @@
+import { assertSchedulableAuthor } from "@/utils/repository/AuthorRepo"
 import { all, enqueueTask, one, run } from "@/utils/db"
 import { newId, nowIso } from "@/utils/ids"
 import { Author, Essay, Task, Topic } from "@/types"
@@ -66,6 +67,7 @@ async function insertTask(values: {
 }
 
 export async function createWriteEssayTask(author: Author, topic: Topic, parent: Task): Promise<Task> {
+    await assertSchedulableAuthor(author.id)
     return insertTask({
         prompt: "write_essay",
         author_id: author.id,
@@ -75,6 +77,7 @@ export async function createWriteEssayTask(author: Author, topic: Topic, parent:
 }
 
 export async function createWriteReviewTask(author: Author, essay: Essay, parent: Task): Promise<Task> {
+    await assertSchedulableAuthor(author.id)
     return insertTask({
         prompt: "write_review",
         author_id: author.id,
@@ -84,6 +87,7 @@ export async function createWriteReviewTask(author: Author, essay: Essay, parent
 }
 
 export async function createWriteTopicTask(author: Author, parent: Task | null = null): Promise<Task> {
+    await assertSchedulableAuthor(author.id)
     return insertTask({
         prompt: "write_topic",
         author_id: author.id,
@@ -92,6 +96,7 @@ export async function createWriteTopicTask(author: Author, parent: Task | null =
 }
 
 export async function createTask(params: Omit<Task, "id" | "created_at" | "completed_at">): Promise<Task> {
+    await assertSchedulableAuthor(params.author_id)
     return insertTask(params)
 }
 

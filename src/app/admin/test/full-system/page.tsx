@@ -1,8 +1,8 @@
-import { getAllAuthors } from '@/utils/repository/AuthorRepo'
+import { getActiveAuthors } from '@/utils/repository/AuthorRepo'
 import { CreateTopicTaskForm } from './CreateTopicTaskForm'
 
 export default async function CreateTopicTaskPage() {
-    const authors = await getAllAuthors()
+    const authors = await getActiveAuthors()
 
     return (
         <div className="container mx-auto p-4">

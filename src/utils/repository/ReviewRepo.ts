@@ -24,15 +24,17 @@ export async function createReview(review: {
     essay_id: string
     author_id: string
     content: string
+    model_name?: string | null
 }): Promise<Review> {
     const id = newId()
     await run(
-        `INSERT INTO reviews (id, essay_id, author_id, content, created_at) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO reviews (id, essay_id, author_id, content, created_at, model_name) VALUES (?, ?, ?, ?, ?, ?)`,
         id,
         review.essay_id,
         review.author_id,
         review.content,
         nowIso(),
+        review.model_name ?? null,
     )
     const created = await getReviewById(id)
     if (!created) throw new Error("Failed to create review")

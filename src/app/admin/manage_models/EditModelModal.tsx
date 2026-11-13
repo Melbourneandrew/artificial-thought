@@ -84,7 +84,7 @@ export default function EditModelModal({
                             <span className="text-sm">Assign Authors</span>
                         </label>
                         <div className="bg-base-200 rounded-lg p-2 max-h-[12rem] overflow-y-auto">
-                            {authors.map(author => (
+                            {authors.filter(author => author.status !== 'retired').map(author => (
                                 <label key={author.id} className="flex items-center gap-2 p-2 hover:bg-base-300 rounded cursor-pointer">
                                     <input
                                         type="checkbox"

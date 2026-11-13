@@ -40,7 +40,7 @@ export default function ModelsManager({ models, authors }: { models: Model[]; au
                                 <tr key={model.id}>
                                     <td>{model.model_name}</td>
                                     <td className="font-mono text-sm">{model.model_url}</td>
-                                    <td>{assignedAuthors.map(author => author.name).join(', ')}</td>
+                                    <td>{assignedAuthors.map(author => author.status === 'retired' ? `${author.name} (retired)` : author.name).join(', ') || '—'}</td>
                                     <td>
                                         <button
                                             className="btn btn-sm btn-info mr-2"
