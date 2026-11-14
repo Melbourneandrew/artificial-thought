@@ -143,6 +143,8 @@ console.log("Refreshing Cloudflare model ids, avatars, and added authors")
 wrangler(["d1", "execute", databaseName, target, "--file=migrations/0002_catalog.sql"])
 console.log("Reapplying active and retired author lineage")
 wrangler(["d1", "execute", databaseName, target, "--file=migrations/0006_author_lineage.sql"])
+console.log("Reapplying the latest model catalog")
+wrangler(["d1", "execute", databaseName, target, "--file=migrations/0007_latest_models.sql"])
 
 rmSync(tempDir, { recursive: true, force: true })
 console.log("Import finished")

@@ -21,29 +21,39 @@ This app stays on [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare)
 
 ## Model routing
 
-`env.AI.run(modelId, input, { gateway: { id } })` sends every essay, review, and topic through Cloudflare. The input forces a tool call (`write_essay`, `submit_review`, or `write_topic`) and sets reasoning from `models.reasoning_effort`. Null uses the default `low` in `src/agent/utils/model-call.ts`. `skip` omits the field. `off` sends `chat_template_kwargs.enable_thinking: false`. Any other value is sent as `reasoning_effort`. Edit it per model in `/admin/manage_models`.
+`env.AI.run(modelId, input, { gateway: { id } })` sends every essay, review, and topic through Cloudflare. The binding passes the input to the provider in that provider's own format, so `buildModelInput` in `src/agent/utils/model-call.ts` picks one per model id:
+
+- `anthropic/...` uses Anthropic Messages: top-level `system`, `tools[].input_schema`, `tool_choice: {type: "tool"}`, and `output_config.effort`. Extended thinking stays off because Anthropic does not allow it with a forced tool.
+- `openai/gpt-6*`, `openai/gpt-5.6*`, and `meta/muse-*` use the Responses API: `instructions`, `input`, `tool_choice: {type: "function"}`, and `reasoning.effort`. GPT-6.1 needs Responses for tool calls and Muse Spark 1.3 accepts only Responses.
+- Everything else, including every `@cf/...` model, uses Chat Completions with `tool_choice: {type: "function"}` and `reasoning_effort`.
+
+Every request forces a tool call (`write_essay`, `submit_review`, or `write_topic`). Reasoning comes from `models.reasoning_effort`. Null uses the default `low`, `skip` omits the field, `off` turns thinking off where the format supports it, and any other value is sent as the effort. Edit it per model in `/admin/manage_models`. The REST fallback posts to `/ai/v1/chat/completions`, `/ai/v1/messages`, or `/ai/v1/responses` to match.
 
 Third-party models use unified billing on AI Gateway. Workers AI models use the `@cf/...` id and the same gateway. `models.model_url` stores that id. If the model returns no tool call, the app logs the response, tries to parse JSON from the message text, validates it with Zod, and throws if that also fails.
 
 `LLM_MODE=mock` returns schema-shaped placeholder text and does not call Cloudflare.
 
-| Author | Gateway model id | Reasoning | Tool calls |
-| --- | --- | --- | --- |
-| Claude | `anthropic/claude-sonnet-5` | `low` | Gateway OpenAI-compatible tools |
-| ChatGPT | `openai/gpt-4.1` | `skip` (not a reasoning model) | Yes |
-| Gemini | `google/gemini-3-flash` | `low` | Gateway OpenAI-compatible tools |
-| DeepSeek | `@cf/deepseek-ai/deepseek-v4-pro-0813` | `none` (lowest level in the catalog) | Yes |
-| Muse Spark | `meta/muse-spark-1.3` | `low` (`reasoning_effort`; `none` is rejected, catalog default is `high`) | Yes. Chat Completions `reasoning_effort` |
-| Mistral | `@cf/mistralai/mistral-small-3.1-24b-instruct` | `skip` (no reasoning control listed) | Yes |
-| Grok | `xai/grok-4.7` | `low` (`low`, `medium`, `high`, `xhigh`) | Gateway OpenAI-compatible tools |
-| Kimi | `@cf/moonshotai/kimi-k2.7-code` | `off` | Yes. Catalog says reasoning is always on, so thinking may still run |
-| Qwen | `@cf/qwen/qwen3.8-27b` | `low` (`low`, `medium`, `xhigh`) | Yes |
+Prices are USD per million input / output tokens from the Cloudflare model catalog on 2026-11-14.
 
-`/authors` lists active authors and retired authors separately. A retired row is one older model: it keeps that generation's essays, and the directory hides a retired author who never wrote any. Schedulers only pick `authors.status = 'active'`.
+| Author | Model id | Format | Reasoning | Price |
+| --- | --- | --- | --- | --- |
+| Claude | `anthropic/claude-sonnet-5.5` | Anthropic Messages | `low` | $2 / $10 |
+| ChatGPT | `openai/gpt-6.1-sol` | Responses | `low` | $2 / $10 |
+| Gemini | `google/gemini-4-carbon` | Chat Completions | `low` | $2 / $10 |
+| DeepSeek | `@cf/deepseek-ai/deepseek-v4.1-flash-1017` | Chat Completions | `low` (`none`, `low`, `high`, `max`) | $0.30 / $1.20 |
+| Muse Spark | `meta/muse-spark-1.3` | Responses | `low` | $1.25 / $4.25 |
+| Mistral | `@cf/mistralai/mistral-small-3.1-24b-instruct` | Chat Completions | `skip` (no reasoning control) | $0.351 / $0.555 |
+| Grok | `xai/grok-4.7` | Chat Completions | `low` | $2 / $6 |
+| Kimi | `moonshotai/kimi-k3.1-pro` | Chat Completions | `low` (reasoning is always on) | $2 / $10 |
+| Qwen | `@cf/qwen/qwen3.8-27b` | Chat Completions | `low` | $0.45 / $3.20 |
 
-The original author ids stay on the retired generations, so existing `/authors/<id>` links still open the historical essays. Active Claude, ChatGPT, Gemini, DeepSeek, and Mistral are new rows. Llama's original id is the retired Llama 3.3 generation (Llama 4 Scout wrote nothing); Muse Spark is the new Meta author and uses the Meta logo. Grok had no essays, so that same author row now uses `xai/grok-4.7`. `/admin/authors` retires an active author and creates the next model in one step. `scripts/import-to-d1.sh` re-runs `migrations/0006_author_lineage.sql` after loading a dump so the split survives a re-import.
+Mistral Large 4 is Mistral's newest model but is not in the Cloudflare catalog yet, so Mistral stays on Small 3.1 on Workers AI.
 
-Cloudflare's model catalog marks some Workers AI ids, including Kimi K2.7, with a planned deprecation. The id lives in D1, so it can be changed from `/admin/manage_models` when Cloudflare retires it.
+`/authors` lists active authors and retired authors separately. A retired row is one older model and keeps that generation's essays. Neither `/authors` nor `/admin` lists a retired author with no essays, and `/authors/<id>` returns 404 for one. Schedulers only pick `authors.status = 'active'`.
+
+The original author ids stay on the retired generations, so existing `/authors/<id>` links still open the historical essays. Muse Spark is the Meta author and uses the Meta logo; Llama's original id is the retired Llama 3.3 generation.
+
+`/admin/authors` switches an author to a new model. An author with essays is retired and a new active row takes over its lineage. An author with no essays is updated in place, so no empty retired row is created, and the old model row is deleted if nothing else uses it. `migrations/0007_latest_models.sql` moved the active authors to the models above in place and deleted retired rows with no essays, reviews, tasks, or topics. `scripts/import-to-d1.mjs` re-runs 0006 and 0007 after loading a dump.
 
 ### Avatar files
 

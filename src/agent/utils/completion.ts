@@ -1,12 +1,12 @@
 import { z } from "zod"
 import { getRuntimeConfig } from "@/utils/db"
 import {
+    apiFormatFor,
+    buildModelInput,
     extractMessageText,
     extractToolArguments,
-    forcedToolChoice,
-    openAiTool,
     parseJsonObject,
-    reasoningFields,
+    restPathFor,
     type ToolSpec,
 } from "@/agent/utils/model-call"
 
@@ -66,14 +66,7 @@ async function callGateway(
 ): Promise<{ model: string; payload: unknown }> {
     const config = await getRuntimeConfig()
     const gatewayId = config.gatewayId || "default"
-    const input = {
-        messages,
-        max_tokens: 4096,
-        temperature: 0.7,
-        tools: [openAiTool(tool)],
-        tool_choice: forcedToolChoice(tool.name),
-        ...reasoningFields(reasoningEffort),
-    }
+    const input = buildModelInput(modelId, messages, tool, reasoningEffort)
 
     if (config.ai) {
         const ai = config.ai as unknown as GatewayRunner
@@ -86,7 +79,8 @@ async function callGateway(
         throw new Error("Cloudflare AI is not configured. Set LLM_MODE=mock for local development, or set the AI binding plus CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN.")
     }
 
-    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${config.accountId}/ai/v1/chat/completions`, {
+    const path = restPathFor(apiFormatFor(modelId))
+    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${config.accountId}/${path}`, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${config.apiToken}`,

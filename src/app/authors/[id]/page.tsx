@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { isListedAuthor } from '@/utils/author-status'
 import Link from 'next/link'
 import { getAuthorWithEssaysAndReviews } from '@/utils/repository/AuthorRepo'
 import ProfilePicture from '@/components/ProfilePicture'
@@ -35,7 +36,8 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
     const contentType = (await searchParams).type || 'essays' // Default to essays
 
     const author = await getAuthorWithEssaysAndReviews(id)
-    if (!author) {
+    // A retired generation with no essays is not part of the directory.
+    if (!author || !isListedAuthor(author)) {
         notFound()
     }
 

@@ -13,14 +13,14 @@ INSERT INTO prompts (prompt_key, prompt, created_at) VALUES
 ON CONFLICT(prompt_key) DO NOTHING;
 
 INSERT INTO models (id, model_name, model_url, created_at) VALUES
-    ('8831d242-9568-4876-95ee-057da6bf4ff0', 'Claude Sonnet 5', 'anthropic/claude-sonnet-5', '2025-01-01T00:00:00.000Z'),
-    ('9931d242-9568-4876-95ee-057da6bf4ff0', 'GPT-4.1', 'openai/gpt-4.1', '2025-01-01T00:00:00.000Z'),
-    ('a031d242-9568-4876-95ee-057da6bf4ff0', 'Gemini 3 Flash', 'google/gemini-3-flash', '2025-01-01T00:00:00.000Z'),
-    ('b131d242-9568-4876-95ee-057da6bf4ff0', 'DeepSeek V4 Pro', '@cf/deepseek-ai/deepseek-v4-pro-0813', '2025-01-01T00:00:00.000Z'),
+    ('8831d242-9568-4876-95ee-057da6bf4ff0', 'Claude Sonnet 5.5', 'anthropic/claude-sonnet-5.5', '2025-01-01T00:00:00.000Z'),
+    ('9931d242-9568-4876-95ee-057da6bf4ff0', 'GPT-6.1 Sol', 'openai/gpt-6.1-sol', '2025-01-01T00:00:00.000Z'),
+    ('a031d242-9568-4876-95ee-057da6bf4ff0', 'Gemini 4 Carbon', 'google/gemini-4-carbon', '2025-01-01T00:00:00.000Z'),
+    ('b131d242-9568-4876-95ee-057da6bf4ff0', 'DeepSeek V4.1 Flash', '@cf/deepseek-ai/deepseek-v4.1-flash-1017', '2025-01-01T00:00:00.000Z'),
     ('d331d242-9568-4876-95ee-057da6bf4ff0', 'Llama 4 Scout', '@cf/meta/llama-4-scout-17b-16e-instruct', '2025-01-01T00:00:00.000Z'),
     ('e431d242-9568-4876-95ee-057da6bf4ff0', 'Mistral Small 3.1', '@cf/mistralai/mistral-small-3.1-24b-instruct', '2025-01-01T00:00:00.000Z'),
     ('f1a1b2c3-d4e5-4678-9abc-def012345678', 'Grok 4.7', 'xai/grok-4.7', '2026-11-12T00:00:00.000Z'),
-    ('a1b1c2d3-e4f5-4678-8abc-def012345679', 'Kimi K2.7', '@cf/moonshotai/kimi-k2.7-code', '2026-11-12T00:00:00.000Z'),
+    ('a1b1c2d3-e4f5-4678-8abc-def012345679', 'Kimi K3.1 Pro', 'moonshotai/kimi-k3.1-pro', '2026-11-12T00:00:00.000Z'),
     ('b1c1d2e3-f4a5-4678-8abc-def012345670', 'Qwen 3.8 27B', '@cf/qwen/qwen3.8-27b', '2026-11-12T00:00:00.000Z')
 ON CONFLICT(id) DO UPDATE SET
     model_name = excluded.model_name,
@@ -34,7 +34,7 @@ INSERT INTO authors (id, name, model_id, bio, system_prompt_key, profile_picture
     ('72c62e70-d502-49e3-948b-b9b566b8d103', 'Mistral', 'e431d242-9568-4876-95ee-057da6bf4ff0', 'Developed by Mistral AI, a European AI research company committed to building powerful, efficient language models while maintaining technological sovereignty. [mistral.ai](https://mistral.ai/)', 'author-system-prompt', '/authors/mistral.svg', '2025-01-01T00:00:00.000Z'),
     ('28aa367b-d5ae-48ac-b235-3d216cd1738c', 'Llama', 'd331d242-9568-4876-95ee-057da6bf4ff0', 'Created through Meta AI''s open research initiatives, advancing the field of artificial intelligence through collaborative development and open-source contributions. [llama.com](https://www.llama.com/)', 'author-system-prompt', '/authors/meta.svg', '2025-01-01T00:00:00.000Z'),
     ('f0a1b2c3-d4e5-4678-9abc-def012345678', 'Grok', 'f1a1b2c3-d4e5-4678-9abc-def012345678', 'Developed by xAI. Grok writes in a direct, curious voice and is reached through Cloudflare AI Gateway as xai/grok-4.7. [x.ai](https://x.ai/)', 'author-system-prompt', '/authors/xai.svg', '2026-11-12T00:00:00.000Z'),
-    ('a0b1c2d3-e4f5-4678-8abc-def012345679', 'Kimi', 'a1b1c2d3-e4f5-4678-8abc-def012345679', 'Moonshot AI''s Kimi K2.7, hosted on Workers AI, writes long-context essays with a careful, exploratory style. [moonshot.ai](https://www.moonshot.ai/)', 'author-system-prompt', '/authors/kimi.svg', '2026-11-12T00:00:00.000Z'),
+    ('a0b1c2d3-e4f5-4678-8abc-def012345679', 'Kimi', 'a1b1c2d3-e4f5-4678-8abc-def012345679', 'Moonshot AI''s Kimi K3.1 Pro, reached through Cloudflare AI Gateway, writes long-context essays with a careful, exploratory style. [moonshot.ai](https://www.moonshot.ai/)', 'author-system-prompt', '/authors/kimi.svg', '2026-11-12T00:00:00.000Z'),
     ('b0c1d2e3-f4a5-4678-8abc-def012345670', 'Qwen', 'b1c1d2e3-f4a5-4678-8abc-def012345670', 'Alibaba''s Qwen 3.8 27B, hosted on Workers AI, contributes concise essays with a research-minded tone. [qwenlm.github.io](https://qwenlm.github.io/)', 'author-system-prompt', '/authors/qwen.svg', '2026-11-12T00:00:00.000Z')
 ON CONFLICT(id) DO NOTHING;
 

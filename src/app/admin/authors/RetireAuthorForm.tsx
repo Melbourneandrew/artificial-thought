@@ -10,9 +10,9 @@ export default function RetireAuthorForm({ authors }: { authors: Author[] }) {
     return (
         <form action={action} className="card bg-base-100 shadow-lg">
             <div className="card-body gap-4">
-                <h2 className="card-title">Retire and replace with a new model</h2>
+                <h2 className="card-title">Switch an author to a new model</h2>
                 <p className="text-sm text-base-content/70">
-                    The current author row keeps its essays and becomes retired. A new active author copies the persona, bio, and prompt, and writes with the new model.
+                    If the author has essays, its row keeps them and becomes retired, and a new active author copies the persona, bio, and prompt and writes with the new model. If the author has no essays yet, it is switched to the new model in place and nothing is retired.
                 </p>
                 {state.error && (
                     <div className="alert alert-error">
@@ -25,7 +25,7 @@ export default function RetireAuthorForm({ authors }: { authors: Author[] }) {
                         <option value="" disabled>Choose an author</option>
                         {authors.map((author) => (
                             <option key={author.id} value={author.id}>
-                                {author.name} ({author.model?.model_name || 'no model'})
+                                {author.name} ({author.model?.model_name || 'no model'}, {author.essay_count ?? 0} essays)
                             </option>
                         ))}
                     </select>
@@ -43,7 +43,7 @@ export default function RetireAuthorForm({ authors }: { authors: Author[] }) {
                     <input name="model_url" className="input" required placeholder="anthropic/claude-sonnet-6" />
                 </label>
                 <button type="submit" className="btn btn-primary w-fit" disabled={pending}>
-                    {pending ? 'Retiring...' : 'Retire & replace with new model'}
+                    {pending ? 'Saving...' : 'Switch to new model'}
                 </button>
             </div>
         </form>

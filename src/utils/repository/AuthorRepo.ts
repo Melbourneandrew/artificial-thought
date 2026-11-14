@@ -42,7 +42,7 @@ export async function retireAndReplace(input: {
     modelName: string
     modelUrl: string
     authorName?: string
-}): Promise<{ retiredId: string; activeId: string }> {
+}): Promise<{ retiredId: string | null; activeId: string; updatedInPlace: boolean }> {
     const modelName = input.modelName.trim()
     const modelUrl = input.modelUrl.trim()
     if (!modelName || !modelUrl) throw new Error("Model name and Cloudflare model id are required")
@@ -53,11 +53,35 @@ export async function retireAndReplace(input: {
     }
 
     const lineage = lineageKey(existing.name, existing.lineage)
-    const activeId = newId()
     const modelId = newId()
     const createdAt = nowIso()
     const authorName = input.authorName?.trim() || existing.name
     const db = await getDb()
+
+    // An author with no essays has no history to preserve. Retiring it would only
+    // add an empty retired row, so switch it to the new model in place instead.
+    if ((existing.essay_count ?? 0) === 0) {
+        const previousModelId = existing.model_id || null
+        await db.batch([
+            db.prepare(
+                `INSERT INTO models (id, model_name, model_url, created_at, reasoning_effort) VALUES (?, ?, ?, ?, 'low')`,
+            ).bind(modelId, modelName, modelUrl, createdAt),
+            db.prepare(
+                `UPDATE authors SET model_id = ?, name = ?, lineage = ? WHERE id = ? AND status = 'active'`,
+            ).bind(modelId, authorName, lineage, existing.id),
+        ])
+        if (previousModelId) {
+            await run(
+                `DELETE FROM models WHERE id = ? AND NOT EXISTS (SELECT 1 FROM authors WHERE model_id = ?)`,
+                previousModelId,
+                previousModelId,
+            )
+        }
+        await bumpPublicCache()
+        return { retiredId: null, activeId: existing.id, updatedInPlace: true }
+    }
+
+    const activeId = newId()
     await db.batch([
         db.prepare(
             `INSERT INTO models (id, model_name, model_url, created_at, reasoning_effort) VALUES (?, ?, ?, ?, 'low')`,
@@ -82,7 +106,7 @@ export async function retireAndReplace(input: {
     const retired = await getAuthorById(existing.id)
     if (retired?.status !== "retired") throw new Error("Failed to retire the author")
     await bumpPublicCache()
-    return { retiredId: existing.id, activeId }
+    return { retiredId: existing.id, activeId, updatedInPlace: false }
 }
 
 export async function getAuthorById(id: string): Promise<Author | null> {

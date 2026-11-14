@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Author, Model } from '@/types'
+import { isListedAuthor } from '@/utils/author-status'
 import AddModelModal from './AddModelModal'
 import EditModelModal from './EditModelModal'
 import DeleteModelModal from './DeleteModelModal'
@@ -35,7 +36,7 @@ export default function ModelsManager({ models, authors }: { models: Model[]; au
                     </thead>
                     <tbody>
                         {models.map((model) => {
-                            const assignedAuthors = authors.filter(author => author.model_id === model.id)
+                            const assignedAuthors = authors.filter(author => author.model_id === model.id && isListedAuthor(author))
                             return (
                                 <tr key={model.id}>
                                     <td>{model.model_name}</td>

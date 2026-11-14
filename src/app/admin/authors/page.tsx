@@ -1,11 +1,13 @@
 import { getActiveAuthors, getAllAuthors } from '@/utils/repository/AuthorRepo'
+import { isListedAuthor } from '@/utils/author-status'
 import RetireAuthorForm from './RetireAuthorForm'
 
 export const dynamic = "force-dynamic"
 
 export default async function ManageAuthorsPage() {
     const [active, all] = await Promise.all([getActiveAuthors(), getAllAuthors()])
-    const retired = all.filter((author) => author.status === 'retired')
+    // Retired rows with no essays have nothing to show, so they are hidden here too.
+    const retired = all.filter((author) => author.status === 'retired' && isListedAuthor(author))
 
     return (
         <div className="container mx-auto p-8 max-w-4xl">

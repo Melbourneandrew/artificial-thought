@@ -80,6 +80,100 @@ export function reasoningFields(effort: string | null | undefined): Record<strin
     return { reasoning_effort: value }
 }
 
+/**
+ * Request shape AI Gateway expects for a model on the `env.AI.run` path.
+ * The binding passes the input through in the model's native format, so
+ * Anthropic models take Messages and some OpenAI and Meta models take Responses
+ * (GPT-6.x tool calling requires the Responses API). Everything else,
+ * including every Workers AI `@cf/` model, takes OpenAI chat completions.
+ */
+export type ApiFormat = "chat" | "anthropic" | "responses"
+
+export function apiFormatFor(modelId: string): ApiFormat {
+    const id = modelId.trim().toLowerCase()
+    if (id.startsWith("anthropic/")) return "anthropic"
+    if (/^openai\/gpt-(6|5\.6)/.test(id)) return "responses"
+    if (/^meta\/muse-(spark|wonder)/.test(id)) return "responses"
+    return "chat"
+}
+
+export function isWorkersAiModel(modelId: string): boolean {
+    return modelId.trim().startsWith("@cf/")
+}
+
+/** REST path for the same request shape when the binding is not available. */
+export function restPathFor(format: ApiFormat): string {
+    if (format === "anthropic") return "ai/v1/messages"
+    if (format === "responses") return "ai/v1/responses"
+    return "ai/v1/chat/completions"
+}
+
+type InputMessage = { role: "system" | "user" | "assistant"; content: string }
+
+const EFFORT_LEVELS = new Set(["none", "minimal", "low", "medium", "high", "xhigh", "max"])
+
+function effortValue(effort: string | null | undefined): string | null {
+    const value = (effort ?? "").trim() || DEFAULT_REASONING_EFFORT
+    if (value === "skip") return null
+    if (value === "off") return "none"
+    return EFFORT_LEVELS.has(value) ? value : DEFAULT_REASONING_EFFORT
+}
+
+function systemText(messages: InputMessage[]): string {
+    return messages.filter((m) => m.role === "system").map((m) => m.content).filter(Boolean).join("\n\n")
+}
+
+/**
+ * Builds the input for one forced tool call with low reasoning effort.
+ * Workers AI models keep temperature 0.7. Third-party gateway models omit it,
+ * because several reasoning models (GPT-6.x, Kimi K3.x) reject a custom temperature.
+ */
+export function buildModelInput(
+    modelId: string,
+    messages: InputMessage[],
+    tool: ToolSpec,
+    reasoningEffort: string | null | undefined,
+): Record<string, unknown> {
+    const format = apiFormatFor(modelId)
+    const workersAi = isWorkersAiModel(modelId)
+
+    if (format === "anthropic") {
+        const system = systemText(messages)
+        const effort = effortValue(reasoningEffort)
+        return {
+            ...(system ? { system } : {}),
+            messages: messages.filter((m) => m.role !== "system"),
+            max_tokens: 8192,
+            tools: [{ name: tool.name, description: tool.description, input_schema: tool.parameters }],
+            // A forced tool call cannot be combined with extended thinking, so thinking stays off.
+            tool_choice: { type: "tool", name: tool.name },
+            ...(effort && effort !== "none" && effort !== "minimal" ? { output_config: { effort } } : {}),
+        }
+    }
+
+    if (format === "responses") {
+        const instructions = systemText(messages)
+        const effort = effortValue(reasoningEffort)
+        return {
+            ...(instructions ? { instructions } : {}),
+            input: messages.filter((m) => m.role !== "system").map((m) => ({ role: m.role, content: m.content })),
+            max_output_tokens: 8192,
+            tools: [{ type: "function", name: tool.name, description: tool.description, parameters: tool.parameters }],
+            tool_choice: { type: "function", name: tool.name },
+            ...(effort ? { reasoning: { effort } } : {}),
+        }
+    }
+
+    return {
+        messages,
+        max_tokens: workersAi ? 4096 : 8192,
+        ...(workersAi ? { temperature: 0.7 } : {}),
+        tools: [openAiTool(tool)],
+        tool_choice: forcedToolChoice(tool.name),
+        ...reasoningFields(reasoningEffort),
+    }
+}
+
 function parseArguments(value: unknown): unknown | null {
     if (typeof value === "string") {
         try {
@@ -118,6 +212,30 @@ export function extractToolArguments(payload: unknown): unknown | null {
     const direct = toolCallsFromMessage(record)
     if (direct) return direct
 
+    // Anthropic Messages: content: [{ type: "tool_use", input: {...} }]
+    if (Array.isArray(record.content)) {
+        for (const block of record.content) {
+            if (!block || typeof block !== "object") continue
+            const item = block as Record<string, unknown>
+            if (item.type === "tool_use") {
+                const parsed = parseArguments(item.input)
+                if (parsed) return parsed
+            }
+        }
+    }
+
+    // OpenAI Responses: output: [{ type: "function_call", arguments: "{...}" }]
+    if (Array.isArray(record.output)) {
+        for (const entry of record.output) {
+            if (!entry || typeof entry !== "object") continue
+            const item = entry as Record<string, unknown>
+            if (item.type === "function_call") {
+                const parsed = parseArguments(item.arguments)
+                if (parsed) return parsed
+            }
+        }
+    }
+
     const choices = record.choices
     if (Array.isArray(choices)) {
         for (const choice of choices) {
@@ -143,6 +261,27 @@ export function extractMessageText(payload: unknown): string {
     const record = payload as Record<string, unknown>
     if (typeof record.response === "string") return record.response
     if (typeof record.result === "string") return record.result
+    if (typeof record.output_text === "string" && record.output_text) return record.output_text
+    if (Array.isArray(record.content)) {
+        return record.content.map((block) => {
+            if (block && typeof block === "object" && (block as { type?: unknown }).type === "text") {
+                return String((block as { text?: unknown }).text ?? "")
+            }
+            return ""
+        }).join("")
+    }
+    if (Array.isArray(record.output)) {
+        const parts: string[] = []
+        for (const entry of record.output) {
+            if (!entry || typeof entry !== "object") continue
+            const content = (entry as { content?: unknown }).content
+            if (!Array.isArray(content)) continue
+            for (const part of content) {
+                if (part && typeof part === "object" && "text" in part) parts.push(String((part as { text: unknown }).text))
+            }
+        }
+        if (parts.length) return parts.join("")
+    }
     const choices = record.choices
     if (!Array.isArray(choices) || !choices[0] || typeof choices[0] !== "object") return ""
     const message = (choices[0] as { message?: { content?: unknown } }).message

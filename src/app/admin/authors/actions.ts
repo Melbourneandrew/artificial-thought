@@ -22,7 +22,7 @@ export async function handleRetireAndReplace(_prev: ActionState, formData: FormD
             authorName,
         })
     } catch (error) {
-        return { error: error instanceof Error ? error.message : 'Could not retire the author' }
+        return { error: error instanceof Error ? error.message : 'Could not switch the author to the new model' }
     }
     revalidatePath('/admin/authors')
     revalidatePath('/authors')
