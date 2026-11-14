@@ -137,18 +137,26 @@ test("historical essays stay on the original author id", () => {
     assert.equal(claude.model_url, "anthropic/claude-sonnet-5.5")
     const retiredClaude = db.prepare("SELECT m.model_name FROM authors a JOIN models m ON m.id = a.model_id WHERE a.id = ?").get(CLAUDE) as { model_name: string }
     assert.equal(retiredClaude.model_name, "Claude 3.5 Sonnet")
+
+    // 0008 switches the active Claude to Opus in place; the retired generations stay put.
+    apply(db, "0008_claude_opus.sql")
+    const opus = db.prepare("SELECT a.status, m.model_name, m.model_url, m.reasoning_effort FROM authors a JOIN models m ON m.id = a.model_id WHERE a.id = 'aaaaaaaa-c1a1-4111-8111-00000000c1a1'").get() as { status: string, model_name: string, model_url: string, reasoning_effort: string }
+    assert.deepEqual({ ...opus }, { status: "active", model_name: "Claude Opus 5.5", model_url: "anthropic/claude-opus-5.5", reasoning_effort: "low" })
+    assert.equal((db.prepare("SELECT COUNT(*) AS n FROM authors WHERE status = 'retired'").get() as { n: number }).n, HISTORICAL.length)
 })
 
 test("import reapplies the lineage migration", () => {
     const source = readFileSync(new URL("../scripts/import-to-d1.mjs", import.meta.url), "utf8")
     assert.match(source, /0006_author_lineage\.sql/)
     assert.match(source, /0007_latest_models\.sql/)
+    assert.match(source, /0008_claude_opus\.sql/)
 })
 
 test("0007 updates active authors in place and leaves no empty retired rows", () => {
     const fresh = openMigrated()
     apply(fresh, "0006_author_lineage.sql")
     apply(fresh, "0007_latest_models.sql")
+    apply(fresh, "0008_claude_opus.sql")
     const emptyRetired = fresh.prepare(
         "SELECT COUNT(*) AS n FROM authors a WHERE a.status = 'retired' AND NOT EXISTS (SELECT 1 FROM essays e WHERE e.author_id = a.id)",
     ).get() as { n: number }
@@ -158,7 +166,7 @@ test("0007 updates active authors in place and leaves no empty retired rows", ()
     ).all() as Array<{ name: string, model_url: string, reasoning_effort: string }>
     assert.deepEqual(models.map((row) => [row.name, row.model_url]), [
         ["ChatGPT", "openai/gpt-6.1-sol"],
-        ["Claude", "anthropic/claude-sonnet-5.5"],
+        ["Claude", "anthropic/claude-opus-5.5"],
         ["DeepSeek", "@cf/deepseek-ai/deepseek-v4.1-flash-1017"],
         ["Gemini", "google/gemini-4-carbon"],
         ["Grok", "xai/grok-4.7"],
@@ -174,5 +182,6 @@ test("0007 updates active authors in place and leaves no empty retired rows", ()
     assert.equal(orphanModels.n, 0)
     // Re-running is a no-op apart from the cache counter.
     apply(fresh, "0007_latest_models.sql")
+    apply(fresh, "0008_claude_opus.sql")
     assert.equal((fresh.prepare("SELECT COUNT(*) AS n FROM authors").get() as { n: number }).n, 9)
 })

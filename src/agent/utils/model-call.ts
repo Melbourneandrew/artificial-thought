@@ -119,6 +119,16 @@ function effortValue(effort: string | null | undefined): string | null {
     return EFFORT_LEVELS.has(value) ? value : DEFAULT_REASONING_EFFORT
 }
 
+/**
+ * Anthropic models that reject tool_choice "tool"/"any" with a 400
+ * ("Forced tool use not supported" in Anthropic's error reference, checked 2026-11-14).
+ */
+const NO_FORCED_TOOL_CLAUDE = /^anthropic\/claude-(opus-5\.5|sonnet-5\.5|fable-5|mythos-5)/
+
+export function anthropicSupportsForcedTool(modelId: string): boolean {
+    return !NO_FORCED_TOOL_CLAUDE.test(modelId)
+}
+
 function systemText(messages: InputMessage[]): string {
     return messages.filter((m) => m.role === "system").map((m) => m.content).filter(Boolean).join("\n\n")
 }
@@ -138,15 +148,31 @@ export function buildModelInput(
     const workersAi = isWorkersAiModel(modelId)
 
     if (format === "anthropic") {
-        const system = systemText(messages)
         const effort = effortValue(reasoningEffort)
+        const forced = anthropicSupportsForcedTool(modelId)
+        const system = [
+            systemText(messages),
+            forced ? "" : `Respond only by calling the ${tool.name} tool exactly once. Do not write the answer as plain text.`,
+        ].filter(Boolean).join("\n\n")
         return {
             ...(system ? { system } : {}),
             messages: messages.filter((m) => m.role !== "system"),
-            max_tokens: 8192,
-            tools: [{ name: tool.name, description: tool.description, input_schema: tool.parameters }],
-            // A forced tool call cannot be combined with extended thinking, so thinking stays off.
-            tool_choice: { type: "tool", name: tool.name },
+            max_tokens: forced ? 8192 : 16000,
+            tools: [
+                forced
+                    ? { name: tool.name, description: tool.description, input_schema: tool.parameters }
+                    : {
+                        name: tool.name,
+                        description: tool.description,
+                        input_schema: { ...tool.parameters, additionalProperties: false },
+                        strict: true,
+                    },
+            ],
+            // Claude Opus 5.5, Sonnet 5.5, Fable 5.x, and Mythos 5.x return 400 for a forced
+            // tool_choice. Anthropic's guidance for them is auto plus strict tool use; the
+            // system prompt asks for the tool and completion.ts still parses JSON text as a fallback.
+            // Older models keep the forced call, with thinking left off.
+            tool_choice: forced ? { type: "tool", name: tool.name } : { type: "auto" },
             ...(effort && effort !== "none" && effort !== "minimal" ? { output_config: { effort } } : {}),
         }
     }

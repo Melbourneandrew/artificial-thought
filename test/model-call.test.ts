@@ -61,8 +61,8 @@ test("request format follows the model's native API on the binding path", () => 
     assert.equal(restPathFor("chat"), "ai/v1/chat/completions")
 })
 
-test("Anthropic input forces the tool with low effort and a top-level system prompt", () => {
-    const input = buildModelInput("anthropic/claude-sonnet-5.5", messages, writeEssayTool, "low")
+test("Anthropic input forces the tool on models that allow it", () => {
+    const input = buildModelInput("anthropic/claude-opus-4.8", messages, writeEssayTool, "low")
     assert.equal(input.system, "You write essays.")
     assert.deepEqual(input.messages, [{ role: "user", content: "Write about tides." }])
     assert.deepEqual(input.tool_choice, { type: "tool", name: "write_essay" })
@@ -70,6 +70,20 @@ test("Anthropic input forces the tool with low effort and a top-level system pro
     assert.equal((input.tools as Array<{ input_schema: unknown }>)[0].input_schema, writeEssayTool.parameters)
     assert.equal("temperature" in input, false)
     assert.equal("thinking" in input, false)
+})
+
+test("Claude Opus 5.5 uses auto tool choice with a strict tool, since it rejects forced tool use", () => {
+    for (const model of ["anthropic/claude-opus-5.5", "anthropic/claude-sonnet-5.5"]) {
+        const input = buildModelInput(model, messages, writeEssayTool, "low")
+        assert.deepEqual(input.tool_choice, { type: "auto" }, model)
+        const tool = (input.tools as Array<{ strict: boolean, input_schema: { additionalProperties: boolean, required: string[] } }>)[0]
+        assert.equal(tool.strict, true)
+        assert.equal(tool.input_schema.additionalProperties, false)
+        assert.deepEqual(tool.input_schema.required, ["title", "description", "body"])
+        assert.match(String(input.system), /^You write essays\.\n\nRespond only by calling the write_essay tool exactly once/)
+        assert.deepEqual(input.output_config, { effort: "low" })
+        assert.equal("thinking" in input, false)
+    }
 })
 
 test("Responses input forces the function with low reasoning", () => {

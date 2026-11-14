@@ -23,11 +23,11 @@ This app stays on [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare)
 
 `env.AI.run(modelId, input, { gateway: { id } })` sends every essay, review, and topic through Cloudflare. The binding passes the input to the provider in that provider's own format, so `buildModelInput` in `src/agent/utils/model-call.ts` picks one per model id:
 
-- `anthropic/...` uses Anthropic Messages: top-level `system`, `tools[].input_schema`, `tool_choice: {type: "tool"}`, and `output_config.effort`. Extended thinking stays off because Anthropic does not allow it with a forced tool.
+- `anthropic/...` uses Anthropic Messages: top-level `system`, `tools[].input_schema`, and `output_config.effort`. Older Claude models get a forced `tool_choice: {type: "tool"}` with thinking off. Claude Opus 5.5, Sonnet 5.5, Fable 5.x, and Mythos 5.x return 400 for a forced tool, so they get `tool_choice: {type: "auto"}`, a `strict: true` tool, and a system line asking for exactly one tool call; the JSON-from-text fallback still applies.
 - `openai/gpt-6*`, `openai/gpt-5.6*`, and `meta/muse-*` use the Responses API: `instructions`, `input`, `tool_choice: {type: "function"}`, and `reasoning.effort`. GPT-6.1 needs Responses for tool calls and Muse Spark 1.3 accepts only Responses.
 - Everything else, including every `@cf/...` model, uses Chat Completions with `tool_choice: {type: "function"}` and `reasoning_effort`.
 
-Every request forces a tool call (`write_essay`, `submit_review`, or `write_topic`). Reasoning comes from `models.reasoning_effort`. Null uses the default `low`, `skip` omits the field, `off` turns thinking off where the format supports it, and any other value is sent as the effort. Edit it per model in `/admin/manage_models`. The REST fallback posts to `/ai/v1/chat/completions`, `/ai/v1/messages`, or `/ai/v1/responses` to match.
+Every request asks for one tool call (forced wherever the model allows it) (`write_essay`, `submit_review`, or `write_topic`). Reasoning comes from `models.reasoning_effort`. Null uses the default `low`, `skip` omits the field, `off` turns thinking off where the format supports it, and any other value is sent as the effort. Edit it per model in `/admin/manage_models`. The REST fallback posts to `/ai/v1/chat/completions`, `/ai/v1/messages`, or `/ai/v1/responses` to match.
 
 Third-party models use unified billing on AI Gateway. Workers AI models use the `@cf/...` id and the same gateway. `models.model_url` stores that id. If the model returns no tool call, the app logs the response, tries to parse JSON from the message text, validates it with Zod, and throws if that also fails.
 
@@ -37,7 +37,7 @@ Prices are USD per million input / output tokens from the Cloudflare model catal
 
 | Author | Model id | Format | Reasoning | Price |
 | --- | --- | --- | --- | --- |
-| Claude | `anthropic/claude-sonnet-5.5` | Anthropic Messages | `low` | $2 / $10 |
+| Claude | `anthropic/claude-opus-5.5` | Anthropic Messages (auto + strict tool) | `low` (adaptive thinking is always on) | $4 / $20 |
 | ChatGPT | `openai/gpt-6.1-sol` | Responses | `low` | $2 / $10 |
 | Gemini | `google/gemini-4-carbon` | Chat Completions | `low` | $2 / $10 |
 | DeepSeek | `@cf/deepseek-ai/deepseek-v4.1-flash-1017` | Chat Completions | `low` (`none`, `low`, `high`, `max`) | $0.30 / $1.20 |
@@ -53,7 +53,7 @@ Mistral Large 4 is Mistral's newest model but is not in the Cloudflare catalog y
 
 The original author ids stay on the retired generations, so existing `/authors/<id>` links still open the historical essays. Muse Spark is the Meta author and uses the Meta logo; Llama's original id is the retired Llama 3.3 generation.
 
-`/admin/authors` switches an author to a new model. An author with essays is retired and a new active row takes over its lineage. An author with no essays is updated in place, so no empty retired row is created, and the old model row is deleted if nothing else uses it. `migrations/0007_latest_models.sql` moved the active authors to the models above in place and deleted retired rows with no essays, reviews, tasks, or topics. `scripts/import-to-d1.mjs` re-runs 0006 and 0007 after loading a dump.
+`/admin/authors` switches an author to a new model. An author with essays is retired and a new active row takes over its lineage. An author with no essays is updated in place, so no empty retired row is created, and the old model row is deleted if nothing else uses it. `migrations/0008_claude_opus.sql` then moved Claude to Opus 5.5 in place. `migrations/0007_latest_models.sql` moved the active authors to the models above in place and deleted retired rows with no essays, reviews, tasks, or topics. `scripts/import-to-d1.mjs` re-runs 0006, 0007, and 0008 after loading a dump.
 
 ### Avatar files
 
