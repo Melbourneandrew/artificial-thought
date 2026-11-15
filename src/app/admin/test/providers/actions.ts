@@ -5,13 +5,21 @@ import { requireAdmin } from '@/utils/require-admin'
 import { revalidatePath } from 'next/cache'
 import { getAllModels } from '@/utils/repository/ModelRepo'
 import { z } from 'zod'
-import { getStructuredCompletion } from '@/agent/utils/completion'
-import type { ToolSpec } from '@/agent/utils/model-call'
+import { defineStructuredTask, runStructuredTask } from '@/agent/llm'
 
 type ActionState = {
     error: string
     result: string
 }
+
+const providerTestTask = defineStructuredTask({
+    name: 'submit_test',
+    description: 'Submit a greeting and a fun fact.',
+    schema: z.object({
+        greeting: z.string().min(1).describe('A friendly greeting.'),
+        funFact: z.string().min(1).describe('An interesting fun fact about technology.'),
+    }),
+})
 
 export async function testProvider(prevState: ActionState, formData: FormData): Promise<ActionState> {
     await requireAdmin()
@@ -29,36 +37,10 @@ export async function testProvider(prevState: ActionState, formData: FormData): 
             }
         }
 
-        // Single set of messages for structured completion
-        const messages = [
-            { role: 'system' as const, content: 'You are a helpful assistant.' },
-            { role: 'user' as const, content: 'Please provide a friendly greeting and an interesting fun fact about technology.' }
-        ]
-
-        const schema = z.object({
-            greeting: z.string().min(1),
-            funFact: z.string().min(1),
+        const structuredResult = await runStructuredTask(model, providerTestTask, {
+            system: 'You are a helpful assistant.',
+            prompt: 'Please provide a friendly greeting and an interesting fun fact about technology.',
         })
-        const tool: ToolSpec = {
-            name: "submit_test",
-            description: "Submit a greeting and a fun fact.",
-            parameters: {
-                type: "object",
-                properties: {
-                    greeting: { type: "string", description: "A friendly greeting." },
-                    funFact: { type: "string", description: "An interesting fun fact about technology." },
-                },
-                required: ["greeting", "funFact"],
-            },
-        }
-
-        const structuredResult = await getStructuredCompletion<typeof schema>(
-            messages,
-            schema,
-            model.model_url,
-            tool,
-            model.reasoning_effort,
-        )
         const result = JSON.stringify(structuredResult, null, 2)
 
         revalidatePath('/admin/test/providers')

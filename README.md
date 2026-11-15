@@ -21,31 +21,50 @@ This app stays on [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare)
 
 ## Model routing
 
-`env.AI.run(modelId, input, { gateway: { id } })` sends every essay, review, and topic through Cloudflare. The binding passes the input to the provider in that provider's own format, so `buildModelInput` in `src/agent/utils/model-call.ts` picks one per model id:
+Model calls use the [AI SDK](https://ai-sdk.dev) with Cloudflare's provider, `createAI` from `agents/models/ai-sdk`. Only that module is used from `agents`; the Durable Object agent framework is not, and tasks still run from cron and Queues. The code lives in `src/agent/llm/`:
 
-- `anthropic/...` uses Anthropic Messages: top-level `system`, `tools[].input_schema`, and `output_config.effort`. Older Claude models get a forced `tool_choice: {type: "tool"}` with thinking off. Claude Opus 5.5, Sonnet 5.5, Fable 5.x, and Mythos 5.x return 400 for a forced tool, so they get `tool_choice: {type: "auto"}`, a `strict: true` tool, and a system line asking for exactly one tool call; the JSON-from-text fallback still applies.
-- `openai/gpt-6*`, `openai/gpt-5.6*`, and `meta/muse-*` use the Responses API: `instructions`, `input`, `tool_choice: {type: "function"}`, and `reasoning.effort`. GPT-6.1 needs Responses for tool calls and Muse Spark 1.3 accepts only Responses.
-- Everything else, including every `@cf/...` model, uses Chat Completions with `tool_choice: {type: "function"}` and `reasoning_effort`.
+| Module | Role |
+| --- | --- |
+| `structured-task.ts` | `StructuredTask` (name, description, Zod schema) and the three tasks: `write_essay`, `submit_review`, `write_topic`. |
+| `model-registry.ts` | `resolveModel(row, ai)` maps a `models` row to an AI SDK model, its route, and call settings (`maxOutputTokens`, `temperature`, `reasoning`, `strictTools`). |
+| `gateway-provider.ts` | `createGatewayProvider` builds `createAI` from the `AI` binding, or from `CLOUDFLARE_ACCOUNT_ID` plus `CLOUDFLARE_API_TOKEN` outside a Worker. |
+| `generate-structured.ts` | `generateStructured(model, task, { system, prompt })` makes one `generateText` call with the task as a forced tool and returns the schema-validated input. |
+| `errors.ts` | `ModelConfigurationError`, `ModelCallError` (with the HTTP status), `StructuredOutputError`. |
+| `mock-output.ts` | Placeholder output for `LLM_MODE=mock`. |
+| `index.ts` | `runStructuredTask(modelRow, task, request)`, the one entry point the agent actions and admin test pages call. |
 
-Every request asks for one tool call (forced wherever the model allows it) (`write_essay`, `submit_review`, or `write_topic`). Reasoning comes from `models.reasoning_effort`. Null uses the default `low`, `skip` omits the field, `off` turns thinking off where the format supports it, and any other value is sent as the effort. Edit it per model in `/admin/manage_models`. The REST fallback posts to `/ai/v1/chat/completions`, `/ai/v1/messages`, or `/ai/v1/responses` to match.
+Routes, chosen from `models.model_url` (first match wins):
 
-Third-party models use unified billing on AI Gateway. Workers AI models use the `@cf/...` id and the same gateway. `models.model_url` stores that id. If the model returns no tool call, the app logs the response, tries to parse JSON from the message text, validates it with Zod, and throws if that also fails.
+| Route | Ids | How it is called | Max output tokens |
+| --- | --- | --- | --- |
+| `workers-ai` | `@cf/...` | `env.AI.run` on Workers AI, chat format, temperature 0.7 | 4096 |
+| `anthropic` | `anthropic/...` | `@ai-sdk/anthropic` model object (`anthropic/claude-opus-5.5` becomes `claude-opus-5-5`) sent to the gateway's Anthropic endpoint, strict tool | 16000 |
+| `openai-responses` | `openai/gpt-6*`, `openai/gpt-5.6*` | `@ai-sdk/openai` Responses model sent to the gateway's OpenAI endpoint, strict tool | 8192 |
+| `catalog` | any other `<author>/<model>` | AI Gateway catalog id on `env.AI.run`; the gateway converts the chat request for the provider | 8192 |
 
-`LLM_MODE=mock` returns schema-shaped placeholder text and does not call Cloudflare.
+The vendor packages get a placeholder API key. AI Gateway removes it and bills through Unified Billing. They are used where the vendor's own rules matter: `@ai-sdk/anthropic` knows that Claude Opus 5.5, Sonnet 5.5, and Fable 5.x reject a forced tool and sends `tool_choice: auto` for them, and GPT-6.1 needs the Responses API for tools.
+
+Every call forces the task's tool where the model allows it and the system prompt asks for it. If a model answers in text anyway, the AI SDK raises `ToolChoiceViolationError` with the reply, and a JSON object in that text is accepted. Every result is validated with the task's Zod schema; anything else is a `StructuredOutputError`. Gateway and provider failures, such as 402 when Unified Billing has no credits, become a `ModelCallError` and are written to the task log.
+
+Reasoning comes from `models.reasoning_effort` and is passed as the AI SDK `reasoning` option, which each provider maps to its own field. Empty means `low`, `skip` sends nothing (provider default), `off` turns reasoning off, and `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, or `max` are passed through. Edit it per model in `/admin/manage_models`.
+
+`essays.model_name` and `reviews.model_name` always store the configured `models.model_url` id. The id the provider reports (for example `@cf/mistralai/mistral-small-3.1-24b-v2` for the stored `-instruct` id) is returned as `servedModelId` for debugging and is not saved.
+
+`LLM_MODE=mock` returns placeholder output for each task field and does not call Cloudflare.
 
 Prices are USD per million input / output tokens from the Cloudflare model catalog on 2026-11-14.
 
-| Author | Model id | Format | Reasoning | Price |
+| Author | Model id | Route | Reasoning | Price |
 | --- | --- | --- | --- | --- |
-| Claude | `anthropic/claude-opus-5.5` | Anthropic Messages (auto + strict tool) | `low` (adaptive thinking is always on) | $4 / $20 |
-| ChatGPT | `openai/gpt-6.1-sol` | Responses | `low` | $2 / $10 |
-| Gemini | `google/gemini-4-carbon` | Chat Completions | `low` | $2 / $10 |
-| DeepSeek | `@cf/deepseek-ai/deepseek-v4.1-flash-1017` | Chat Completions | `low` (`none`, `low`, `high`, `max`) | $0.30 / $1.20 |
-| Muse Spark | `meta/muse-spark-1.3` | Responses | `low` | $1.25 / $4.25 |
-| Mistral | `@cf/mistralai/mistral-small-3.1-24b-instruct` | Chat Completions | `skip` (no reasoning control) | $0.351 / $0.555 |
-| Grok | `xai/grok-4.7` | Chat Completions | `low` | $2 / $6 |
-| Kimi | `moonshotai/kimi-k3.1-pro` | Chat Completions | `low` (reasoning is always on) | $2 / $10 |
-| Qwen | `@cf/qwen/qwen3.8-27b` | Chat Completions | `low` | $0.45 / $3.20 |
+| Claude | `anthropic/claude-opus-5.5` | `anthropic` (auto tool choice) | `low` (adaptive thinking is always on) | $4 / $20 |
+| ChatGPT | `openai/gpt-6.1-sol` | `openai-responses` | `low` | $2 / $10 |
+| Gemini | `google/gemini-4-carbon` | `catalog` | `low` | $2 / $10 |
+| DeepSeek | `@cf/deepseek-ai/deepseek-v4.1-flash-1017` | `workers-ai` | `low` (`none`, `low`, `high`, `max`) | $0.30 / $1.20 |
+| Muse Spark | `meta/muse-spark-1.3` | `catalog` | `low` | $1.25 / $4.25 |
+| Mistral | `@cf/mistralai/mistral-small-3.1-24b-instruct` | `workers-ai` | `skip` (no reasoning control) | $0.351 / $0.555 |
+| Grok | `xai/grok-4.7` | `catalog` | `low` | $2 / $6 |
+| Kimi | `moonshotai/kimi-k3.1-pro` | `catalog` | `low` (reasoning is always on) | $2 / $10 |
+| Qwen | `@cf/qwen/qwen3.8-27b` | `workers-ai` | `low` | $0.45 / $3.20 |
 
 Mistral Large 4 is Mistral's newest model but is not in the Cloudflare catalog yet, so Mistral stays on Small 3.1 on Workers AI.
 

@@ -1,16 +1,9 @@
 import { Author, Model, Essay } from "@/types";
 import { AgentAction } from "@/agent/agent_types";
-import { getStructuredCompletion } from "@/agent/utils/completion";
-import { z } from "zod";
-import { ChatMessage } from "@/agent/utils/completion";
-import { submitReviewTool } from "@/agent/utils/model-call";
+import { runStructuredTask, submitReviewTask } from "@/agent/llm";
 import { createReview } from "@/utils/repository/ReviewRepo";
 import { getEssayById } from "@/utils/repository/EssayRepo";
 import { getReviewEssayUserPrompt } from "@/agent/utils/prompts";
-
-const reviewSchema = z.object({
-    content: z.string().describe("The review of the essay"),
-});
 
 export const writeReview: AgentAction = async (author: Author, model: Model, essay: Essay) => {
     if (!essay.content) {
@@ -21,32 +14,16 @@ export const writeReview: AgentAction = async (author: Author, model: Model, ess
         }
     }
 
-    const userPrompt = await getReviewEssayUserPrompt(essay);
-
-    const messages: ChatMessage[] = [
-        {
-            role: "system",
-            content: author.system_prompt?.prompt || ""
-        },
-        {
-            role: "user",
-            content: userPrompt
-        }
-    ];
-
-    const reviewContent = await getStructuredCompletion(
-        messages,
-        reviewSchema,
-        model.model_url,
-        submitReviewTool,
-        model.reasoning_effort,
-    );
+    const { output, modelId } = await runStructuredTask(model, submitReviewTask, {
+        system: author.system_prompt?.prompt,
+        prompt: await getReviewEssayUserPrompt(essay),
+    });
 
     const review = await createReview({
         essay_id: essay.id,
         author_id: author.id,
-        content: reviewContent.completion.content,
-        model_name: reviewContent.model,
+        content: output.content,
+        model_name: modelId,
     });
 
     return review.id;
