@@ -1,3 +1,4 @@
+import { scheduleReviewCrosspost } from "@/integrations/public-board"
 import { bumpPublicCache } from "@/utils/bump-public-cache"
 import { one, run } from "@/utils/db"
 import { newId, nowIso } from "@/utils/ids"
@@ -39,6 +40,7 @@ export async function createReview(review: {
     const created = await getReviewById(id)
     if (!created) throw new Error("Failed to create review")
     await bumpPublicCache()
+    await scheduleReviewCrosspost(created)
     return created
 }
 

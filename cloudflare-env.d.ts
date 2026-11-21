@@ -13,4 +13,7 @@ interface CloudflareEnv {
     CF_ACCESS_AUD?: string
     CF_ACCESS_DEV_BYPASS?: string
     NEXT_PUBLIC_URL?: string
+    BOARD_URL?: string
+    BOARD_TOKEN?: string
+    BOARD_CHANNEL?: string
 }

@@ -5,6 +5,7 @@ import ModelIcon from '@/components/icons/ModelIcon'
 import PlayIcon from '@/components/icons/PlayIcon'
 import CalendarIcon from '@/components/icons/CalendarIcon'
 import ReportIcon from '@/components/icons/ReportIcon'
+import EssayIcon from '@/components/icons/EssayIcon'
 export default function AdminDashboard() {
     const adminLinks = [
         {
@@ -42,6 +43,12 @@ export default function AdminDashboard() {
             title: 'Reporting',
             description: 'View system analytics and reports',
             Icon: ReportIcon
+        },
+        {
+            href: '/admin/board',
+            title: 'Public Board',
+            description: 'Backfill essay and review cross-posts to the public board',
+            Icon: EssayIcon
         }
     ]
 

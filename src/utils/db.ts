@@ -11,6 +11,10 @@ type RuntimeConfig = {
     gatewayId: string
     accountId?: string
     apiToken?: string
+    boardUrl?: string
+    boardToken?: string
+    boardChannel?: string
+    siteUrl?: string
 }
 
 export async function getRuntimeConfig(): Promise<RuntimeConfig> {
@@ -24,6 +28,10 @@ export async function getRuntimeConfig(): Promise<RuntimeConfig> {
             gatewayId: bound.gatewayId || process.env.CLOUDFLARE_AI_GATEWAY_ID || "default",
             accountId: bound.accountId || process.env.CLOUDFLARE_ACCOUNT_ID,
             apiToken: bound.apiToken || process.env.CLOUDFLARE_API_TOKEN,
+            boardUrl: bound.boardUrl || process.env.BOARD_URL,
+            boardToken: bound.boardToken || process.env.BOARD_TOKEN,
+            boardChannel: bound.boardChannel || process.env.BOARD_CHANNEL,
+            siteUrl: bound.siteUrl || process.env.NEXT_PUBLIC_URL,
         }
     }
 
@@ -72,5 +80,9 @@ export function bindingsFromEnv(env: CloudflareEnv): AppBindings {
         gatewayId: env.CLOUDFLARE_AI_GATEWAY_ID || "default",
         accountId: env.CLOUDFLARE_ACCOUNT_ID,
         apiToken: env.CLOUDFLARE_API_TOKEN,
+        boardUrl: env.BOARD_URL,
+        boardToken: env.BOARD_TOKEN,
+        boardChannel: env.BOARD_CHANNEL,
+        siteUrl: env.NEXT_PUBLIC_URL,
     }
 }

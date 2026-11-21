@@ -8,10 +8,32 @@ export type AppBindings = {
     gatewayId?: string
     accountId?: string
     apiToken?: string
+    boardUrl?: string
+    boardToken?: string
+    boardChannel?: string
+    siteUrl?: string
 }
 
-export type TaskQueueMessage = {
+export type AgentTaskQueueMessage = {
+    type?: "task"
     taskId: string
+}
+
+export type BoardCrosspostMessage = {
+    type: "board_crosspost"
+    kind: "essay" | "review"
+    id: string
+}
+
+export type TaskQueueMessage = AgentTaskQueueMessage | BoardCrosspostMessage
+
+export function isBoardCrosspostMessage(message: TaskQueueMessage): message is BoardCrosspostMessage {
+    return message.type === "board_crosspost"
+}
+
+export function queueJobLabel(message: TaskQueueMessage): string {
+    if (isBoardCrosspostMessage(message)) return `board_crosspost ${message.kind} ${message.id}`
+    return `task ${message.taskId}`
 }
 
 const storage = new AsyncLocalStorage<AppBindings>()

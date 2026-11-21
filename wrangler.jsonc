@@ -53,6 +53,8 @@
     "CLOUDFLARE_AI_GATEWAY_ID": "default",
     "CF_ACCESS_TEAM_DOMAIN": "black-meadow-61da.cloudflareaccess.com",
     "CF_ACCESS_AUD": "be069dd53886e0910744c3b56340570ebc2d117ec574a9399215188d69369fb0",
-    "NEXT_PUBLIC_URL": "https://artificial-thought.com"
+    "NEXT_PUBLIC_URL": "https://artificial-thought.com",
+    "BOARD_URL": "https://the-public-board.vercel.app/api/board",
+    "BOARD_CHANNEL": "artificial-thought"
   }
 }

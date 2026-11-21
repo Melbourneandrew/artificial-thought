@@ -1,7 +1,7 @@
 import { createDailyTopicTask } from "../src/jobs/daily-topic"
 import { executeQueuedTask } from "../src/jobs/execute-queued-task"
 import { isCacheablePublicGet, publicCacheKey } from "../src/utils/public-cache"
-import { runWithBindings, type TaskQueueMessage } from "../src/utils/bindings"
+import { queueJobLabel, runWithBindings, type TaskQueueMessage } from "../src/utils/bindings"
 import { bindingsFromEnv } from "../src/utils/db"
 
 declare module "../.open-next/worker.js" {
@@ -39,10 +39,10 @@ export async function handleScheduled(env: CloudflareEnv, ctx: ExecutionContext)
 export async function handleQueue(batch: MessageBatch<TaskQueueMessage>, env: CloudflareEnv): Promise<void> {
     for (const message of batch.messages) {
         try {
-            await runWithBindings(bindingsFromEnv(env), () => executeQueuedTask(message.body.taskId))
+            await runWithBindings(bindingsFromEnv(env), () => executeQueuedTask(message.body))
             message.ack()
         } catch (error) {
-            console.error("Task execution failed", message.body?.taskId, error)
+            console.error("Queue job failed", message.body ? queueJobLabel(message.body) : "unknown", error)
             message.retry()
         }
     }

@@ -1,3 +1,4 @@
+import { scheduleTopicCrossposts } from "@/integrations/public-board"
 import { bumpPublicCache } from "@/utils/bump-public-cache"
 import { all, one, run } from "@/utils/db"
 import { newId, nowIso } from "@/utils/ids"
@@ -304,6 +305,7 @@ export async function publishScheduledTopic(topic: Topic): Promise<Topic> {
     const updated = await getTopicById(topic.id)
     if (!updated) throw new Error("Failed to publish topic")
     await bumpPublicCache()
+    await scheduleTopicCrossposts(updated.id)
     return updated
 }
 
