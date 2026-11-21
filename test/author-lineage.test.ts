@@ -150,6 +150,7 @@ test("import reapplies the lineage migration", () => {
     assert.match(source, /0006_author_lineage\.sql/)
     assert.match(source, /0007_latest_models\.sql/)
     assert.match(source, /0008_claude_opus\.sql/)
+    assert.match(source, /0009_qwen_glm\.sql/)
 })
 
 test("0007 updates active authors in place and leaves no empty retired rows", () => {
@@ -184,4 +185,48 @@ test("0007 updates active authors in place and leaves no empty retired rows", ()
     apply(fresh, "0007_latest_models.sql")
     apply(fresh, "0008_claude_opus.sql")
     assert.equal((fresh.prepare("SELECT COUNT(*) AS n FROM authors").get() as { n: number }).n, 9)
+})
+
+test("0009 switches Qwen in place and adds a GLM author", () => {
+    const fresh = openMigrated()
+    apply(fresh, "0006_author_lineage.sql")
+    apply(fresh, "0007_latest_models.sql")
+    apply(fresh, "0008_claude_opus.sql")
+    apply(fresh, "0009_qwen_glm.sql")
+    const emptyRetired = fresh.prepare(
+        "SELECT COUNT(*) AS n FROM authors a WHERE a.status = 'retired' AND NOT EXISTS (SELECT 1 FROM essays e WHERE e.author_id = a.id)",
+    ).get() as { n: number }
+    assert.equal(emptyRetired.n, 0)
+    const models = fresh.prepare(
+        "SELECT a.name, m.model_url, m.reasoning_effort FROM authors a JOIN models m ON m.id = a.model_id WHERE a.status = 'active' ORDER BY a.name",
+    ).all() as Array<{ name: string, model_url: string, reasoning_effort: string }>
+    assert.deepEqual(models.map((row) => [row.name, row.model_url]), [
+        ["ChatGPT", "openai/gpt-6.1-sol"],
+        ["Claude", "anthropic/claude-opus-5.5"],
+        ["DeepSeek", "@cf/deepseek-ai/deepseek-v4.1-flash-1017"],
+        ["GLM", "@cf/zai-org/glm-5.3"],
+        ["Gemini", "google/gemini-4-carbon"],
+        ["Grok", "xai/grok-4.7"],
+        ["Kimi", "moonshotai/kimi-k3.1-pro"],
+        ["Mistral", "@cf/mistralai/mistral-small-3.1-24b-instruct"],
+        ["Muse Spark", "meta/muse-spark-1.3"],
+        ["Qwen", "alibaba/qwen3.8-max"],
+    ])
+    assert.ok(models.every((row) => row.reasoning_effort === "low" || row.model_url.includes("mistral-small")))
+    const glm = fresh.prepare(
+        "SELECT a.status, a.lineage, a.profile_picture_url, m.model_name FROM authors a JOIN models m ON m.id = a.model_id WHERE a.id = 'c0d1e2f3-a4b5-4678-8abc-def012345671'",
+    ).get() as { status: string, lineage: string, profile_picture_url: string, model_name: string }
+    assert.deepEqual({ ...glm }, {
+        status: "active",
+        lineage: "glm",
+        profile_picture_url: "/authors/zai.svg",
+        model_name: "GLM 5.3",
+    })
+    const qwen = fresh.prepare(
+        "SELECT a.status, (SELECT COUNT(*) FROM essays e WHERE e.author_id = a.id) AS essays, m.model_name FROM authors a JOIN models m ON m.id = a.model_id WHERE a.id = 'b0c1d2e3-f4a5-4678-8abc-def012345670'",
+    ).get() as { status: string, essays: number, model_name: string }
+    assert.deepEqual({ ...qwen }, { status: "active", essays: 0, model_name: "Qwen 3.8 Max" })
+    const authorCount = (fresh.prepare("SELECT COUNT(*) AS n FROM authors").get() as { n: number }).n
+    apply(fresh, "0009_qwen_glm.sql")
+    assert.equal((fresh.prepare("SELECT COUNT(*) AS n FROM authors").get() as { n: number }).n, authorCount)
 })

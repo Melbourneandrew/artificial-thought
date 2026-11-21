@@ -21,7 +21,7 @@ export interface StructuredResult<Output> {
 /**
  * Asks the model for one call of the task's tool and returns its validated input.
  * The tool is forced where the model allows it; models that reject a forced tool
- * (Claude 5.5) get auto tool choice from their vendor package, and the system
+ * (Claude 5.5, Kimi with thinking, Muse Spark) get auto tool choice, and the system
  * prompt asks for the tool either way. If a model still answers in text, a JSON
  * object in that text is accepted. Every result is validated with the task schema.
  */
@@ -50,7 +50,7 @@ export async function generateStructured<Task extends StructuredTask>(
             system: [request.system, `Respond by calling the ${task.name} tool exactly once.`].filter(Boolean).join("\n\n"),
             prompt: request.prompt,
             tools,
-            toolChoice: { type: "tool", toolName: task.name },
+            toolChoice: settings.forceTool ? { type: "tool", toolName: task.name } : "auto",
             maxOutputTokens: settings.maxOutputTokens,
             temperature: settings.temperature,
             reasoning: settings.reasoning,

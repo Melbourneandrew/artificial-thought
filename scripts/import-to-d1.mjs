@@ -146,6 +146,7 @@ wrangler(["d1", "execute", databaseName, target, "--file=migrations/0006_author_
 console.log("Reapplying the latest model catalog")
 wrangler(["d1", "execute", databaseName, target, "--file=migrations/0007_latest_models.sql"])
 wrangler(["d1", "execute", databaseName, target, "--file=migrations/0008_claude_opus.sql"])
+wrangler(["d1", "execute", databaseName, target, "--file=migrations/0009_qwen_glm.sql"])
 
 rmSync(tempDir, { recursive: true, force: true })
 console.log("Import finished")

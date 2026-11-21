@@ -62,7 +62,7 @@ function mockModel(result: Partial<LanguageModelV4GenerateResult> | (() => never
 }
 
 function asResolved(model: MockLanguageModelV4): ResolvedModel {
-    return { id: "test/model", route: "catalog", model, settings: { maxOutputTokens: 1000, reasoning: "low", strictTools: false } }
+    return { id: "test/model", route: "catalog", model, settings: { maxOutputTokens: 1000, reasoning: "low", strictTools: false, forceTool: true } }
 }
 
 test("reasoning_effort maps to the AI SDK reasoning level, defaulting to low", () => {
@@ -77,18 +77,20 @@ test("reasoning_effort maps to the AI SDK reasoning level, defaulting to low", (
 
 test("models resolve to a route with per-route call settings", () => {
     const { ai } = fakeBinding({})
-    const cases: Array<[string, string, number, number | undefined, boolean]> = [
-        ["@cf/qwen/qwen3.8-27b", "workers-ai", 4096, 0.7, false],
-        ["anthropic/claude-opus-5.5", "anthropic", 16000, undefined, true],
-        ["openai/gpt-6.1-sol", "openai-responses", 8192, undefined, true],
-        ["meta/muse-spark-1.3", "catalog", 8192, undefined, false],
-        ["moonshotai/kimi-k3.1-pro", "catalog", 8192, undefined, false],
+    const cases: Array<[string, string, number, number | undefined, boolean, boolean]> = [
+        ["@cf/qwen/qwen3.8-27b", "workers-ai", 4096, 0.7, false, true],
+        ["anthropic/claude-opus-5.5", "anthropic", 16000, undefined, true, true],
+        ["openai/gpt-6.1-sol", "openai-responses", 8192, undefined, true, true],
+        ["meta/muse-spark-1.3", "catalog", 8192, undefined, false, false],
+        ["moonshotai/kimi-k3.1-pro", "catalog", 8192, undefined, false, false],
+        ["alibaba/qwen3.8-max", "catalog", 8192, undefined, false, true],
+        ["google/gemini-4-carbon", "catalog", 8192, undefined, false, true],
     ]
-    for (const [id, route, maxOutputTokens, temperature, strictTools] of cases) {
+    for (const [id, route, maxOutputTokens, temperature, strictTools, forceTool] of cases) {
         const resolved = resolveModel({ model_url: ` ${id} `, reasoning_effort: "low" }, ai)
         assert.equal(resolved.id, id)
         assert.equal(resolved.route, route, id)
-        assert.deepEqual(resolved.settings, { maxOutputTokens, temperature, reasoning: "low", strictTools }, id)
+        assert.deepEqual(resolved.settings, { maxOutputTokens, temperature, reasoning: "low", strictTools, forceTool }, id)
     }
     assert.equal(resolveModel({ model_url: "anthropic/claude-opus-5.5" }, ai).model.modelId, "claude-opus-5-5")
     assert.equal(resolveModel({ model_url: "openai/gpt-6.1-sol" }, ai).model.modelId, "gpt-6.1-sol")
@@ -169,6 +171,16 @@ test("skip sends no reasoning field and catalog ids keep the default temperature
     assert.equal("temperature" in (captured.inputs ?? {}), false)
     assert.equal(captured.inputs?.max_completion_tokens, 8192)
     assert.equal(captured.options?.openaiEndpoint, "/v1/chat/completions")
+    assert.equal(captured.inputs?.tool_choice, "auto")
+})
+
+test("Kimi and Muse Spark send auto tool choice because they reject a forced tool", async () => {
+    for (const id of ["moonshotai/kimi-k3.1-pro", "meta/muse-spark-1.3"]) {
+        const { ai, captured } = fakeBinding({ run: chatToolReply("write_topic", { title: "Tides" }) })
+        await generateStructured(resolveModel({ model_url: id, reasoning_effort: "low" }, ai), writeTopicTask, request)
+        assert.equal(captured.inputs?.tool_choice, "auto", id)
+        assert.equal(captured.inputs?.reasoning_effort, "low", id)
+    }
 })
 
 test("Claude Opus 5.5 goes to the gateway's Anthropic endpoint with auto tool choice and a strict tool", async () => {

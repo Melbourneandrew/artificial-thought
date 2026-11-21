@@ -28,6 +28,8 @@ export interface ModelCallSettings {
     reasoning: ReasoningLevel
     /** Send tools with `strict: true` (schema-constrained sampling) where the vendor supports it. */
     strictTools: boolean
+    /** When false, send toolChoice auto. Used for models that reject a forced tool. */
+    forceTool: boolean
 }
 
 export interface ResolvedModel {
@@ -62,6 +64,8 @@ interface RouteRule {
     maxOutputTokens: number
     temperature?: number
     strictTools: boolean
+    /** Defaults to true. Set false for models that reject a forced / named tool_choice. */
+    forceTool?: boolean
     build: (ai: AI, modelId: string) => LanguageModelV4
 }
 
@@ -101,6 +105,15 @@ const ROUTES: readonly RouteRule[] = [
     },
     {
         route: "catalog",
+        // Kimi's thinking mode and Muse Spark both reject a named/required tool_choice.
+        matches: (id) => id.startsWith("moonshotai/kimi-") || id.startsWith("meta/muse-spark-"),
+        maxOutputTokens: 8192,
+        strictTools: false,
+        forceTool: false,
+        build: (ai, id) => ai.languageModel(id),
+    },
+    {
+        route: "catalog",
         matches: (id) => id.includes("/"),
         maxOutputTokens: 8192,
         strictTools: false,
@@ -124,6 +137,7 @@ export function resolveModel(record: ModelRecord, ai: AI): ResolvedModel {
             temperature: rule.temperature,
             reasoning: reasoningLevel(record.reasoning_effort),
             strictTools: rule.strictTools,
+            forceTool: rule.forceTool !== false,
         },
     }
 }
