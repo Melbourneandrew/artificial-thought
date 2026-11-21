@@ -12,6 +12,9 @@ export interface ModelRecord {
 /** The AI SDK's unified reasoning level, which every provider maps to its own field. */
 export type ReasoningLevel = NonNullable<LanguageModelV4CallOptions["reasoning"]>
 
+/** How generateStructured asks the model to call the task tool. */
+export type ToolChoiceMode = "tool" | "required" | "auto"
+
 /**
  * How a model is reached.
  * - `workers-ai`: an `@cf/` id on Workers AI.
@@ -28,8 +31,14 @@ export interface ModelCallSettings {
     reasoning: ReasoningLevel
     /** Send tools with `strict: true` (schema-constrained sampling) where the vendor supports it. */
     strictTools: boolean
-    /** When false, send toolChoice auto. Used for models that reject a forced tool. */
-    forceTool: boolean
+    /**
+     * How the task tool is requested.
+     * - `tool`: force this function by name (default).
+     * - `required`: require a tool call, but do not name it. Used when a named
+     *   tool_choice is rejected or ignored (Kimi K3 thinking, Qwen).
+     * - `auto`: the model may answer in text (Muse Spark only accepts this).
+     */
+    toolChoice: ToolChoiceMode
 }
 
 export interface ResolvedModel {
@@ -64,8 +73,8 @@ interface RouteRule {
     maxOutputTokens: number
     temperature?: number
     strictTools: boolean
-    /** Defaults to true. Set false for models that reject a forced / named tool_choice. */
-    forceTool?: boolean
+    /** Defaults to `"tool"`. */
+    toolChoice?: ToolChoiceMode
     build: (ai: AI, modelId: string) => LanguageModelV4
 }
 
@@ -105,11 +114,29 @@ const ROUTES: readonly RouteRule[] = [
     },
     {
         route: "catalog",
-        // Kimi's thinking mode and Muse Spark both reject a named/required tool_choice.
-        matches: (id) => id.startsWith("moonshotai/kimi-") || id.startsWith("meta/muse-spark-"),
+        // Kimi K3 always thinks and rejects a *named* tool_choice, but accepts "required".
+        matches: (id) => id.startsWith("moonshotai/kimi-"),
         maxOutputTokens: 8192,
         strictTools: false,
-        forceTool: false,
+        toolChoice: "required",
+        build: (ai, id) => ai.languageModel(id),
+    },
+    {
+        route: "catalog",
+        // Qwen often ignores a named tool_choice and writes prose; "required" coerces a call.
+        matches: (id) => id.startsWith("alibaba/qwen"),
+        maxOutputTokens: 8192,
+        strictTools: false,
+        toolChoice: "required",
+        build: (ai, id) => ai.languageModel(id),
+    },
+    {
+        route: "catalog",
+        // Muse Spark rejects every tool_choice except "auto".
+        matches: (id) => id.startsWith("meta/muse-spark-"),
+        maxOutputTokens: 8192,
+        strictTools: false,
+        toolChoice: "auto",
         build: (ai, id) => ai.languageModel(id),
     },
     {
@@ -137,7 +164,7 @@ export function resolveModel(record: ModelRecord, ai: AI): ResolvedModel {
             temperature: rule.temperature,
             reasoning: reasoningLevel(record.reasoning_effort),
             strictTools: rule.strictTools,
-            forceTool: rule.forceTool !== false,
+            toolChoice: rule.toolChoice ?? "tool",
         },
     }
 }

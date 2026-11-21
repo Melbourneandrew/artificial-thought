@@ -1,6 +1,8 @@
 import { APICallError, generateText, RetryError, tool, ToolChoiceViolationError, type LanguageModelUsage, type ToolSet } from "ai"
 import { ModelCallError, StructuredOutputError } from "./errors.ts"
 import type { ResolvedModel } from "./model-registry.ts"
+import { parseJsonObject } from "./parse-json.ts"
+import { recoverFromText } from "./recover-output.ts"
 import type { StructuredTask, TaskOutput } from "./structured-task.ts"
 
 export interface StructuredRequest {
@@ -20,10 +22,13 @@ export interface StructuredResult<Output> {
 
 /**
  * Asks the model for one call of the task's tool and returns its validated input.
- * The tool is forced where the model allows it; models that reject a forced tool
- * (Claude 5.5, Kimi with thinking, Muse Spark) get auto tool choice, and the system
- * prompt asks for the tool either way. If a model still answers in text, a JSON
- * object in that text is accepted. Every result is validated with the task schema.
+ *
+ * `toolChoice` is `"tool"` (named) where the vendor allows it, `"required"` when a
+ * named choice is rejected but a generic required call works (Kimi K3, Qwen), and
+ * `"auto"` when the model only accepts auto (Muse Spark). The system prompt asks
+ * for the tool either way. If the model still answers in text, a JSON object in
+ * that text is accepted; if there is no JSON, a substantive plain-text review or
+ * essay is accepted once. There is no retry loop.
  */
 export async function generateStructured<Task extends StructuredTask>(
     model: ResolvedModel,
@@ -50,23 +55,29 @@ export async function generateStructured<Task extends StructuredTask>(
             system: [request.system, `Respond by calling the ${task.name} tool exactly once.`].filter(Boolean).join("\n\n"),
             prompt: request.prompt,
             tools,
-            toolChoice: settings.forceTool ? { type: "tool", toolName: task.name } : "auto",
+            toolChoice: toolChoiceFor(settings.toolChoice, task.name),
             maxOutputTokens: settings.maxOutputTokens,
             temperature: settings.temperature,
             reasoning: settings.reasoning,
             abortSignal: options.abortSignal,
         })
         const call = result.toolCalls.find((toolCall) => toolCall.toolName === task.name)
-        candidate = call?.input
         servedModelId = result.response.modelId || undefined
         usage = result.totalUsage
-        source = "tool call"
+        const fromTool = task.schema.safeParse(call?.input)
+        if (fromTool.success) {
+            candidate = fromTool.data
+            source = "tool call"
+        } else {
+            candidate = recoverFromText(task, result.text ?? "")
+            source = "text reply"
+        }
     } catch (error) {
-        // The model answered without the tool (allowed for models that reject a forced tool).
-        // The AI SDK hands back its content so a JSON object written as text can still be used.
+        // Forced or required tool choice: the SDK throws when the model answers in text.
+        // Recover JSON or usable prose from that text instead of calling the model again.
         if (!ToolChoiceViolationError.isInstance(error)) throw toModelCallError(model.id, error)
         const text = error.content.map((part) => (part.type === "text" ? part.text : "")).join("")
-        candidate = parseJsonObject(text)
+        candidate = recoverFromText(task, text)
         servedModelId = error.modelId || undefined
         source = "text reply"
     }
@@ -83,16 +94,12 @@ export async function generateStructured<Task extends StructuredTask>(
     return { output: parsed.data as TaskOutput<Task>, modelId: model.id, servedModelId, usage }
 }
 
-/** Reads the first JSON object in a reply, ignoring a Markdown code fence. */
-export function parseJsonObject(text: string): unknown {
-    const start = text.indexOf("{")
-    const end = text.lastIndexOf("}")
-    if (start < 0 || end <= start) return undefined
-    try {
-        return JSON.parse(text.slice(start, end + 1))
-    } catch {
-        return undefined
-    }
+export { parseJsonObject }
+
+function toolChoiceFor(mode: ResolvedModel["settings"]["toolChoice"], toolName: string) {
+    if (mode === "required") return "required" as const
+    if (mode === "auto") return "auto" as const
+    return { type: "tool" as const, toolName }
 }
 
 function toModelCallError(modelId: string, error: unknown): ModelCallError {

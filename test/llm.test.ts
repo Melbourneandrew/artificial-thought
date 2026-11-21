@@ -62,7 +62,7 @@ function mockModel(result: Partial<LanguageModelV4GenerateResult> | (() => never
 }
 
 function asResolved(model: MockLanguageModelV4): ResolvedModel {
-    return { id: "test/model", route: "catalog", model, settings: { maxOutputTokens: 1000, reasoning: "low", strictTools: false, forceTool: true } }
+    return { id: "test/model", route: "catalog", model, settings: { maxOutputTokens: 1000, reasoning: "low", strictTools: false, toolChoice: "tool" } }
 }
 
 test("reasoning_effort maps to the AI SDK reasoning level, defaulting to low", () => {
@@ -77,20 +77,20 @@ test("reasoning_effort maps to the AI SDK reasoning level, defaulting to low", (
 
 test("models resolve to a route with per-route call settings", () => {
     const { ai } = fakeBinding({})
-    const cases: Array<[string, string, number, number | undefined, boolean, boolean]> = [
-        ["@cf/qwen/qwen3.8-27b", "workers-ai", 4096, 0.7, false, true],
-        ["anthropic/claude-opus-5.5", "anthropic", 16000, undefined, true, true],
-        ["openai/gpt-6.1-sol", "openai-responses", 8192, undefined, true, true],
-        ["meta/muse-spark-1.3", "catalog", 8192, undefined, false, false],
-        ["moonshotai/kimi-k3.1-pro", "catalog", 8192, undefined, false, false],
-        ["alibaba/qwen3.8-max", "catalog", 8192, undefined, false, true],
-        ["google/gemini-4-carbon", "catalog", 8192, undefined, false, true],
+    const cases: Array<[string, string, number, number | undefined, boolean, "tool" | "required" | "auto"]> = [
+        ["@cf/qwen/qwen3.8-27b", "workers-ai", 4096, 0.7, false, "tool"],
+        ["anthropic/claude-opus-5.5", "anthropic", 16000, undefined, true, "tool"],
+        ["openai/gpt-6.1-sol", "openai-responses", 8192, undefined, true, "tool"],
+        ["meta/muse-spark-1.3", "catalog", 8192, undefined, false, "auto"],
+        ["moonshotai/kimi-k3.1-pro", "catalog", 8192, undefined, false, "required"],
+        ["alibaba/qwen3.8-max", "catalog", 8192, undefined, false, "required"],
+        ["google/gemini-4-carbon", "catalog", 8192, undefined, false, "tool"],
     ]
-    for (const [id, route, maxOutputTokens, temperature, strictTools, forceTool] of cases) {
+    for (const [id, route, maxOutputTokens, temperature, strictTools, toolChoice] of cases) {
         const resolved = resolveModel({ model_url: ` ${id} `, reasoning_effort: "low" }, ai)
         assert.equal(resolved.id, id)
         assert.equal(resolved.route, route, id)
-        assert.deepEqual(resolved.settings, { maxOutputTokens, temperature, reasoning: "low", strictTools, forceTool }, id)
+        assert.deepEqual(resolved.settings, { maxOutputTokens, temperature, reasoning: "low", strictTools, toolChoice }, id)
     }
     assert.equal(resolveModel({ model_url: "anthropic/claude-opus-5.5" }, ai).model.modelId, "claude-opus-5-5")
     assert.equal(resolveModel({ model_url: "openai/gpt-6.1-sol" }, ai).model.modelId, "gpt-6.1-sol")
@@ -174,11 +174,15 @@ test("skip sends no reasoning field and catalog ids keep the default temperature
     assert.equal(captured.inputs?.tool_choice, "auto")
 })
 
-test("Kimi and Muse Spark send auto tool choice because they reject a forced tool", async () => {
-    for (const id of ["moonshotai/kimi-k3.1-pro", "meta/muse-spark-1.3"]) {
+test("Kimi and Qwen send tool_choice required; Muse Spark stays on auto", async () => {
+    for (const [id, expected] of [
+        ["moonshotai/kimi-k3.1-pro", "required"],
+        ["alibaba/qwen3.8-max", "required"],
+        ["meta/muse-spark-1.3", "auto"],
+    ] as const) {
         const { ai, captured } = fakeBinding({ run: chatToolReply("write_topic", { title: "Tides" }) })
         await generateStructured(resolveModel({ model_url: id, reasoning_effort: "low" }, ai), writeTopicTask, request)
-        assert.equal(captured.inputs?.tool_choice, "auto", id)
+        assert.equal(captured.inputs?.tool_choice, expected, id)
         assert.equal(captured.inputs?.reasoning_effort, "low", id)
     }
 })
@@ -234,6 +238,59 @@ test("GPT-6.1 goes to the gateway's OpenAI Responses endpoint with a forced func
     assert.deepEqual(body.tool_choice, { type: "function", name: "write_topic" })
     assert.equal((body.reasoning as { effort: string }).effort, "low")
     assert.equal(body.max_output_tokens, 8192)
+})
+
+test("a substantive plain-text review is accepted when the model skips the tool", async () => {
+    const review = "The distinction between recognizing a feeling and actually having one is drawn clearly, and the examples make the gap easy to hold onto. Does that change how we should talk about companion systems?"
+    const model = mockModel({ content: [{ type: "text", text: review }] })
+    const result = await generateStructured(asResolved(model), submitReviewTask, request)
+    assert.deepEqual(result.output, { content: review })
+})
+
+test("a short or empty text reply is not accepted as a review", async () => {
+    const model = mockModel({ content: [{ type: "text", text: "Nice essay." }] })
+    await assert.rejects(generateStructured(asResolved(model), submitReviewTask, request), StructuredOutputError)
+})
+
+test("a substantive plain-text essay is derived into title, description, and body", async () => {
+    const body = Array.from({ length: 5 }, () => "The sea breathes twice a day under the pull of the moon, a rhythm older than our words for it.").join("\n\n")
+    const model = mockModel({ content: [{ type: "text", text: `# Tides\n\n${body}` }] })
+    const result = await generateStructured(asResolved(model), writeEssayTask, request)
+    assert.equal(result.output.title, "Tides")
+    assert.equal(result.output.body, body)
+    assert.ok(result.output.description.length > 0)
+})
+
+test("a short essay status line is not derived into an essay", async () => {
+    const model = mockModel({ content: [{ type: "text", text: "Writing your essay on AI and human emotions — crafting something informative and engaging." }] })
+    await assert.rejects(generateStructured(asResolved(model), writeEssayTask, request), StructuredOutputError)
+})
+
+test("an empty tool-call argument object falls back to a substantive text essay", async () => {
+    const body = Array.from({ length: 5 }, () => "The sea breathes twice a day under the pull of the moon, a rhythm older than our words for it.").join("\n\n")
+    const model = mockModel({
+        content: [
+            { type: "text", text: body },
+            { type: "tool-call", toolCallId: "1", toolName: "write_essay", input: "{}" },
+        ],
+        finishReason: { unified: "tool-calls", raw: "tool_calls" },
+    })
+    const result = await generateStructured(asResolved(model), writeEssayTask, request)
+    assert.equal(result.output.body, body)
+    assert.ok(result.output.title.length > 0)
+})
+
+test("an embedded tool-call JSON envelope in the text is accepted", async () => {
+    const model = mockModel({
+        content: [{ type: "text", text: `<|tool_call|>{"name":"submit_review","arguments":{"content":"The distinction is clear, and the examples give it weight. What would count as a felt reply?"}}` }],
+    })
+    const result = await generateStructured(asResolved(model), submitReviewTask, request)
+    assert.equal(result.output.content, "The distinction is clear, and the examples give it weight. What would count as a felt reply?")
+})
+
+test("a topic written as a refusal is still rejected", async () => {
+    const model = mockModel({ content: [{ type: "text", text: "I would rather not." }] })
+    await assert.rejects(generateStructured(asResolved(model), writeTopicTask, request), StructuredOutputError)
 })
 
 test("mock output fills every task field", () => {
