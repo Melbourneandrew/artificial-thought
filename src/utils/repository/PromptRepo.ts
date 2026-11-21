@@ -1,3 +1,4 @@
+import { bumpPublicCache } from "@/utils/bump-public-cache"
 import { all, one, run } from "@/utils/db"
 import { Prompt } from "@/types"
 
@@ -14,4 +15,5 @@ export async function listPrompts(): Promise<Prompt[]> {
 
 export async function updatePromptByKey(promptKey: string, newPrompt: string): Promise<void> {
     await run(`UPDATE prompts SET prompt = ? WHERE prompt_key = ?`, newPrompt, promptKey)
+    await bumpPublicCache()
 }

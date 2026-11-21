@@ -8,5 +8,6 @@ export async function updatePrompt(promptKey: string, newPrompt: string) {
     await requireAdmin()
     await updatePromptByKey(promptKey, newPrompt)
     revalidatePath('/admin/prompts')
+    revalidatePath('/about')
     return { success: true }
 }
